@@ -84,7 +84,7 @@ beside each entrance in `src/content.js`.
 - `src/life.js`: obsolete early draft; not imported by the active scene.
 
 `base: './'` prepares generated asset paths for GitHub Pages hosting. The workflow
-in `.github/workflows/pages.yml` is ready; remote setup and publication are pending.
+in `.github/workflows/pages.yml` publishes `main` to https://weeelin98.github.io/.
 See `DEPLOYMENT.md` for deployment status and the next development session.
 
 Validation: production build, browser overview / zoom inspection and a ten-minute
@@ -115,7 +115,7 @@ chain is created, and weather switches reuse existing lights, materials and targ
 `npm run build` writes `dist/` with relative asset URLs and local dependencies;
 it can later be served under a GitHub Pages project path. Opening `index.html`
 directly via file:// is not supported; use the local Vite server. F5 uses normal
-browser refresh and restores the sunny, running overview. No deployment performed.
+browser refresh and restores the sunny, running overview.
 
 Step-seven verification covers all six visible/pickable default-view signs,
 text contrast throughout hover, repeated hover reversal, paused cloud/bird motion,

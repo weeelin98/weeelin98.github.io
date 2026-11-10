@@ -5,17 +5,13 @@ Repository: https://github.com/weeelin98/weeelin98.github.io
 Website: https://weeelin98.github.io/
 
 Local production build and all eight check scripts passed. The GitHub Actions
-workflow checks and publishes each push to `main`. Initial publication is in progress.
+workflow checks and publishes each push to `main`. GitHub Pages is enabled with
+GitHub Actions as its publishing source.
 
-## Initial setup
+## Publishing updates
 
-1. Sign in locally with `gh auth login`.
-2. Choose the target repository. A repository named `<username>.github.io` serves
-   at `https://<username>.github.io/`; another name serves at a project subpath.
-3. Initialize this folder as a Git repository on `main`, review the source files,
-   and push them to the chosen remote. Do not overwrite an existing site's history.
-4. In the repository's Settings > Pages, choose GitHub Actions as the source.
-5. Watch the Deploy to GitHub Pages workflow and verify the published URL.
+Commit reviewed changes and push `main` to `origin`. Watch the Deploy to GitHub
+Pages workflow in the repository's Actions tab and verify the published URL.
 
 The workflow runs the checks, builds with Vite, and publishes only `dist/`.
 The existing relative base and local font URLs support both root and project paths.
