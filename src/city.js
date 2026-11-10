@@ -5,16 +5,24 @@ import { destinations, locations } from './content.js';
 import { addDistrictDetails } from './details.js';
 import {makeNavigationSign,buildSignMount} from './signage.js';
 
-export const C = { cream:0xffedcc, white:0xfff9e8, blue:0x286dc0, blueDark:0x1c4b86, terra:0xd38162, terraDark:0xb66348, yellow:0xf2ce64, mint:0x8fc9ae, green:0x315f4b, leaf:0x5b9760, leafLight:0x90b871, gold:0xb9a16c, dark:0x35494a, road:0x84969c, pink:0xeeb5b1 };
+export const C = { cream:0xffeccb, white:0xfff7e7, blue:0x287fce, blueDark:0x194d8c, terra:0xe78565, terraDark:0xbd6047, yellow:0xf3c950, mint:0x76c5a6, green:0x245e49, leaf:0x51894b, leafLight:0x8cb66a, gold:0xb99b60, dark:0x35494a, road:0x84969c, pink:0xeeb5b1 };
 const materials = new Map();
 let furnishingsEnabled = true;
-export function mat(color, roughness=.72, metalness=0){const key=`${color}-${roughness}-${metalness}`;if(!materials.has(key))materials.set(key,new THREE.MeshStandardMaterial({color,roughness,metalness}));return materials.get(key);}
+export function mat(color, roughness=.84, metalness=0){const key=`${color}-${roughness}-${metalness}`;if(!materials.has(key))materials.set(key,new THREE.MeshStandardMaterial({color,roughness,metalness}));return materials.get(key);}
 export const glow = new THREE.MeshStandardMaterial({color:0xffe3a1,emissive:0xffc56d,emissiveIntensity:.08,roughness:.65});
 export const glass = new THREE.MeshStandardMaterial({color:0xa7d7df,transparent:true,opacity:.19,roughness:.2,depthWrite:false,side:THREE.DoubleSide});
 const cube=new THREE.BoxGeometry(1,1,1), cylinder=new THREE.CylinderGeometry(1,1,1,12), sphere=new THREE.SphereGeometry(1,9,7);
-export function box(g,x,y,z,w,h,d,color,rot=0){const soft=w>2&&d>2&&h<.4;const geometry=soft?new RoundedBoxGeometry(w,h,d,2,Math.min(h*.16,.035)):cube;const m=new THREE.Mesh(geometry, color?.isMaterial?color:mat(color));m.position.set(x,y,z);if(!soft)m.scale.set(w,h,d);m.rotation.y=rot;m.castShadow=true;m.receiveShadow=true;g.add(m);return m;}
+const roundedBoxes=new Map();
+export function box(g,x,y,z,w,h,d,color,rot=0){
+ const soft=(w>1.4&&d>.12&&h<.5)||(h>1.6&&Math.min(w,d)>.12);
+ let geometry=cube;
+ if(soft){const key=[w,h,d].join(',');if(!roundedBoxes.has(key))roundedBoxes.set(key,new RoundedBoxGeometry(w,h,d,2,Math.min(w,h,d)*.22));geometry=roundedBoxes.get(key);}
+ const m=new THREE.Mesh(geometry,color?.isMaterial?color:mat(color));m.position.set(x,y,z);if(!soft)m.scale.set(w,h,d);m.rotation.y=rot;m.castShadow=true;m.receiveShadow=true;g.add(m);
+ // Keep authored surface dimensions before static material batching.
+ if(w>.32&&d>.24&&h<.48)m.userData.snowSurface={w,d,h};return m;
+}
 export function cyl(g,x,y,z,r,h,color){const m=new THREE.Mesh(cylinder,color?.isMaterial?color:mat(color));m.position.set(x,y,z);m.scale.set(r,h,r);m.castShadow=true;m.receiveShadow=true;g.add(m);return m;}
-export function ball(g,x,y,z,r,color){const m=new THREE.Mesh(sphere,mat(color));m.position.set(x,y,z);m.scale.setScalar(r);m.castShadow=true;g.add(m);return m;}
+export function ball(g,x,y,z,r,color){const m=new THREE.Mesh(sphere,mat(color));m.position.set(x,y,z);m.scale.setScalar(r);m.castShadow=true;if(color===C.leaf||color===C.leafLight)m.userData.snowPlant=true;g.add(m);return m;}
 export function rod(g,a,b,r,color){const av=new THREE.Vector3(...a),bv=new THREE.Vector3(...b),m=cyl(g,0,0,0,r,av.distanceTo(bv),color);m.position.copy(av).add(bv).multiplyScalar(.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),bv.sub(av).normalize());return m;}
 function roundedSlab(g,x,y,z,w,d,h,r,color){const shape=new THREE.Shape();shape.moveTo(-w/2+r,-d/2);shape.lineTo(w/2-r,-d/2);shape.quadraticCurveTo(w/2,-d/2,w/2,-d/2+r);shape.lineTo(w/2,d/2-r);shape.quadraticCurveTo(w/2,d/2,w/2-r,d/2);shape.lineTo(-w/2+r,d/2);shape.quadraticCurveTo(-w/2,d/2,-w/2,d/2-r);shape.lineTo(-w/2,-d/2+r);shape.quadraticCurveTo(-w/2,-d/2,-w/2+r,-d/2);const geo=new THREE.ExtrudeGeometry(shape,{depth:h,bevelEnabled:false,curveSegments:7});geo.rotateX(-Math.PI/2);const m=new THREE.Mesh(geo,mat(color));m.position.set(x,y,z);m.receiveShadow=true;g.add(m);return m;}
 function rail(g,x,y,z,w,d,openRight=false){const h=.62,r=.025;for(const dz of [-d/2,d/2]){rod(g,[x-w/2,y+h,z+dz],[x+w/2,y+h,z+dz],r,C.gold);rod(g,[x-w/2,y+.18,z+dz],[x+w/2,y+.18,z+dz],r*.7,C.gold);for(let i=0;i<=Math.ceil(w/.55);i++){let xx=x-w/2+i*w/Math.ceil(w/.55);rod(g,[xx,y,z+dz],[xx,y+h,z+dz],r*.7,C.gold);}}for(const dx of [-w/2,w/2]){if(openRight&&dx>0)continue;rod(g,[x+dx,y+h,z-d/2],[x+dx,y+h,z+d/2],r,C.gold);for(let i=0;i<=Math.ceil(d/.55);i++){let zz=z-d/2+i*d/Math.ceil(d/.55);rod(g,[x+dx,y,zz],[x+dx,y+h,zz],r*.7,C.gold);}}}
@@ -23,7 +31,7 @@ function planter(g,x,y,z,w=1.5){box(g,x,y+.18,z,w,.36,.48,C.cream);for(let i=0;i
 function chair(g,x,y,z,rot=0,color=C.green){const group=new THREE.Group();group.position.set(x,y,z);group.rotation.y=rot;g.add(group);box(group,0,.46,0,.42,.09,.43,color);box(group,0,.77,-.19,.42,.5,.055,color);for(let xx of [-.16,.16])for(let zz of [-.15,.15])box(group,xx,.22,zz,.045,.45,.045,C.gold);}
 function table(g,x,y,z,size=.68){cyl(g,x,y+.76,z,size,.09,C.white);cyl(g,x,y+.38,z,.055,.72,C.gold);cyl(g,x,y+.04,z,.28,.06,C.gold);cyl(g,x+.16,y+.86,z,.055,.12,C.cream);cyl(g,x-.2,y+.83,z,.16,.025,C.cream);pot(g,x,y+.81,z-.15,.1);}
 function seating(g,x,y,z){if(!furnishingsEnabled)return;table(g,x,y,z,.5);chair(g,x-.85,y,z,Math.PI/2);chair(g,x+.85,y,z,-Math.PI/2);}
-function window(g,x,y,z,w,h,color=C.cream){box(g,x,y,z,w,h,.035,glass);for(let xx of [x-w/2,x,x+w/2])box(g,xx,y,z+.04,.065,h+.12,.08,color);for(let yy of [y-h/2,y+h/2])box(g,x,yy,z+.04,w+.12,.065,.08,color);}
+function window(g,x,y,z,w,h,color=C.cream){box(g,x,y,z,w,h,.035,glass);for(let xx of [x-w/2,x,x+w/2])box(g,xx,y,z+.04,.085,h+.12,.095,color);for(let yy of [y-h/2,y+h/2])box(g,x,yy,z+.04,w+.12,.09,.095,color);}
 function awning(g,x,y,z,w,d,color=C.mint){let segments=Math.ceil(w/.38);for(let i=0;i<segments;i++){const part=box(g,x-w/2+(i+.5)*w/segments,y,z,w/segments,.10,d,i%2?C.cream:color);part.rotation.x=.16;box(g,x-w/2+(i+.5)*w/segments,y-.17,z+d/2,w/segments,.28,.07,i%2?C.cream:color);}}
 function desk(g,x,y,z){if(!furnishingsEnabled)return;box(g,x,y+.75,z,1.25,.09,.64,C.cream);for(let xx of [x-.5,x+.5])box(g,xx,y+.36,z,.06,.72,.5,C.dark);box(g,x,y+1.16,z-.1,.66,.43,.045,C.dark);box(g,x,y+1.16,z-.069,.56,.33,.01,0x93bfcc);box(g,x,y+.87,z-.1,.05,.2,.05,C.dark);box(g,x,y+.82,z+.17,.47,.025,.17,C.dark);chair(g,x,y,z+.62,Math.PI,C.blueDark);}
 function bookshelf(g,x,y,z,w=1.4){if(!furnishingsEnabled)return;box(g,x,y+.85,z,w,1.7,.32,C.green);for(let yy of [.12,.65,1.2]){box(g,x,y+yy,z+.19,w,.06,.45,C.cream);for(let i=0;i<7;i++)box(g,x-w/2+.12+i*w/7,y+yy+.22,z+.07,.1,.30+(i%3)*.05,.23,[C.terra,C.yellow,C.mint,C.blue][i%4]);}}
@@ -103,9 +111,9 @@ export function buildCity(scene, { furnishings=true, blankSigns=false, carouselR
  }
  const routes=furnishings?addDistrictDetails(city,{box,cyl,ball,rod,mat,C,glow,glass,table,chair,seating,pot,planter,bookshelf}):[];
  // Batch static architecture by material to keep dense detailing inexpensive.
- city.updateMatrixWorld(true);const buckets=new Map();city.traverse(o=>{if(o.isMesh){const m=o.material;if(!buckets.has(m))buckets.set(m,[]);buckets.get(m).push((o.geometry.index?o.geometry.toNonIndexed():o.geometry.clone()).applyMatrix4(o.matrixWorld));}});
+ city.updateMatrixWorld(true);const snowSurfaces=[],snowPlants=[];const buckets=new Map();city.traverse(o=>{if(o.isMesh){if(o.userData.snowPlant)snowPlants.push(o.matrixWorld.clone());if(o.userData.snowSurface){const {w,d,h}=o.userData.snowSurface;const pose=new THREE.Matrix4().compose(o.getWorldPosition(new THREE.Vector3()),o.getWorldQuaternion(new THREE.Quaternion()),new THREE.Vector3(1,1,1));snowSurfaces.push({w,d,h,matrix:pose});}const m=o.material;if(!buckets.has(m))buckets.set(m,[]);buckets.get(m).push((o.geometry.index?o.geometry.toNonIndexed():o.geometry.clone()).applyMatrix4(o.matrixWorld));}});
  city.clear();for(let [material,geos] of buckets){let geo=mergeGeometries(geos);const mesh=new THREE.Mesh(geo,material);mesh.castShadow=!material.transparent;mesh.receiveShadow=true;city.add(mesh);for(let g of geos)g.dispose();}
- return {city,signs,pickables,lamps,shelters,routes};
+ return {city,signs,pickables,lamps,shelters,routes,snowSurfaces,snowPlants};
 }
 
 export function buildFerris(scene, { blankSigns=false } = {}){const base=new THREE.Group();base.position.set(-10.1,.35,-6.7);scene.add(base);base.userData.locationId='ferris';const radius=4.4,cy=10.1;

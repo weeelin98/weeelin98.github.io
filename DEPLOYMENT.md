@@ -4,7 +4,7 @@ Repository: https://github.com/weeelin98/weeelin98.github.io
 
 Website: https://weeelin98.github.io/
 
-Local production build and all eight check scripts passed. The GitHub Actions
+Local production build and all automated check scripts passed. The GitHub Actions
 workflow checks and publishes each push to `main`. GitHub Pages is enabled with
 GitHub Actions as its publishing source.
 

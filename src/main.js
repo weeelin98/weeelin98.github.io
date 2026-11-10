@@ -8,6 +8,7 @@ import { createEnvironment } from './environment.js';
 import { SimulationClock } from './simulation.js';
 import {createDisplayController} from './display.js';
 import {loadSignFonts} from './sign-fonts.js';
+import {createEnvironmentCycle} from './environment-cycle.js';
 import './style.css';
 const loadedSignFonts=await loadSignFonts();
 
@@ -85,22 +86,34 @@ const modelNodes=scene.children.filter(o=>!o.isLight&&o!==sun.target&&o!==fill.t
 scene.add(displayRoot);for(const node of modelNodes)displayRoot.add(node);
 const display=createDisplayController(displayRoot,canvas,controls);
 const interaction=installInteractions({scene,camera,controls,canvas,signs:city.signs,display});
-const environment=createEnvironment({scene,renderer,ambient,sun,fill,city,ferris,carousel,displayRoot});
-document.querySelectorAll('[data-weather]').forEach(button=>button.addEventListener('click',()=>{environment.setState(button.dataset.weather);document.body.classList.toggle('night',environment.state==='night');document.querySelectorAll('[data-weather]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));}));
+const environment=createEnvironment({scene,renderer,ambient,sun,fill,city,ferris,carousel,people,displayRoot});
+const cycle=createEnvironmentCycle(environment);
+cycle.setVisible(!document.hidden);
+const environmentControls=document.querySelector('nav.environment');
+function syncEnvironmentUI(){
+ document.body.classList.toggle('night',environment.night>.45);
+ environmentControls.querySelectorAll('button[data-day]').forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.day===cycle.dayMode));b.dataset.current=String(b.dataset.day===environment.day);});
+ environmentControls.querySelectorAll('button[data-weather]').forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.weather===cycle.weatherMode));b.dataset.current=String(b.dataset.weather===environment.weather);});
+ document.querySelector('#current-day').textContent=environment.day==='night'?'Night':'Day';
+ document.querySelector('#current-weather').textContent=environment.weather[0].toUpperCase()+environment.weather.slice(1);
+}
+environmentControls.addEventListener('pointerdown',e=>e.stopPropagation());
+environmentControls.addEventListener('click',e=>{e.stopPropagation();const button=e.target.closest?.('button');if(!button||!environmentControls.contains(button))return;if(button.dataset.day)cycle.selectDay(button.dataset.day);else if(button.dataset.weather)cycle.selectWeather(button.dataset.weather);syncEnvironmentUI();});
+syncEnvironmentUI();
 addEventListener('resize',fitViewport);
 const targetBefore = new THREE.Vector3();
 const panMin = new THREE.Vector3(-12,1,-9), panMax = new THREE.Vector3(12,12,10);
 const clock=new SimulationClock();
 let lastShadow=-Infinity,lastMetadata=-Infinity,frameCount=0,frameTotal=0,lastFrame=performance.now();
 const pauseButton=document.querySelector('#pause-animation');
-pauseButton.addEventListener('click',()=>{clock.paused=!clock.paused;pauseButton.setAttribute('aria-pressed',String(clock.paused));pauseButton.setAttribute('aria-label',clock.paused?'继续动画':'暂停动画');pauseButton.title=clock.paused?'继续人物、车辆和雨滴':'暂停人物、车辆和雨滴';pauseButton.querySelector('.pause-icon').textContent=clock.paused?'▷':'Ⅱ';pauseButton.querySelector('.pause-text').textContent=clock.paused?'Play':'Pause';});
-document.addEventListener('visibilitychange',()=>clock.rebase());
+pauseButton.addEventListener('click',()=>{clock.paused=!clock.paused;pauseButton.setAttribute('aria-pressed',String(clock.paused));pauseButton.setAttribute('aria-label',clock.paused?'继续动画':'暂停动画');pauseButton.title=clock.paused?'继续人物、车辆、雨雪和自动天气':'暂停人物、车辆、雨雪和自动天气';pauseButton.querySelector('.pause-icon').textContent=clock.paused?'▷':'Ⅱ';pauseButton.querySelector('.pause-text').textContent=clock.paused?'Play':'Pause';});
+document.addEventListener('visibilitychange',()=>{clock.rebase();cycle.setVisible(!document.hidden);syncEnvironmentUI();});
 function animate(now=performance.now()) {
   requestAnimationFrame(animate);
   controls.update();
   const {wallDelta,delta:dt,time:elapsed}=clock.tick(now);
-  environment.update(wallDelta,dt);
-  if(dt>0){ferris.update(elapsed);carousel.update(elapsed);people.update(elapsed,dt,environment.state==='rain');traffic.update(dt);}
+  cycle.update(dt,wallDelta);environment.update(wallDelta,dt);
+  if(dt>0){ferris.update(elapsed);carousel.update(elapsed);people.update(elapsed,dt,environment.weather==='rain',environment.weather==='snow');environment.updateLife(elapsed,dt);traffic.update(dt);}
   if(lastShadow===-Infinity||(!clock.paused&&now-lastShadow>=1000/30)){environment.requestShadows(lastShadow===-Infinity);renderer.shadowMap.needsUpdate=true;lastShadow=now;}
   targetBefore.copy(controls.target);
   controls.target.clamp(panMin,panMax);
@@ -109,14 +122,15 @@ function animate(now=performance.now()) {
   if(display.consumeChange()){environment.requestShadows();renderer.shadowMap.needsUpdate=true;}
   environment.updateView(camera,wallDelta,elapsed);
   frameCount++;frameTotal+=Math.min(now-lastFrame,250);lastFrame=now;
-  if(now-lastMetadata>250){canvas.dataset.paused=String(clock.paused);canvas.dataset.simulationTime=elapsed.toFixed(3);canvas.dataset.frameMs=(frameTotal/frameCount).toFixed(2);canvas.dataset.drawCalls=String(renderer.info.render.calls);frameTotal=0;frameCount=0;lastMetadata=now;
+  if(now-lastMetadata>250){syncEnvironmentUI();canvas.dataset.paused=String(clock.paused);canvas.dataset.simulationTime=elapsed.toFixed(3);canvas.dataset.frameMs=(frameTotal/frameCount).toFixed(2);canvas.dataset.drawCalls=String(renderer.info.render.calls);frameTotal=0;frameCount=0;lastMetadata=now;
+  canvas.dataset.day=environment.day;canvas.dataset.weather=environment.weather;canvas.dataset.dayMode=cycle.dayMode;canvas.dataset.weatherMode=cycle.weatherMode;canvas.dataset.autoWeatherElapsed=cycle.elapsed.toFixed(2);canvas.dataset.snowCover=environment.snowCover.toFixed(3);canvas.dataset.snowAmount=environment.snowAmount.toFixed(3);canvas.dataset.triangles=String(renderer.info.render.triangles);
   canvas.dataset.displayAngle=displayRoot.rotation.y.toFixed(4);canvas.dataset.environment=environment.state;canvas.dataset.wetness=environment.wetness.toFixed(3);canvas.dataset.night=environment.night.toFixed(3);
   canvas.dataset.cameraMoving=String(!!interaction.flight.active);canvas.dataset.zoom=camera.zoom.toFixed(3);canvas.dataset.target=controls.target.toArray().map(n=>n.toFixed(3)).join(',');
   }
   renderer.render(scene,camera);
 }
 animate();
-window.cityDiagnostics = () => ({stage:7,paused:clock.paused,citizens:people.count,buses:traffic.vehicles.length,environment:environment.stats(),animated:!clock.paused,signs:city.signs.length,routes:city.routes.length,cameraZoom:camera.zoom,panelOpen:interaction.panel.open,cameraMoving:!!interaction.flight.active,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles});
+window.cityDiagnostics = () => ({stage:'winter',paused:clock.paused,citizens:people.count,buses:traffic.vehicles.length,environment:environment.stats(),cycle:cycle.stats(),snowCaps:environment.snow.caps.length,winterPeople:environment.winter.gear.length,shovelers:environment.winter.shovelers.length,animated:!clock.paused,signs:city.signs.length,routes:city.routes.length,cameraZoom:camera.zoom,panelOpen:interaction.panel.open,cameraMoving:!!interaction.flight.active,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles});
 
 
 

@@ -22,7 +22,7 @@ export function createRainResponse(citizens,walkers){
   const slot=side==='left'?Math.floor(i/2)%2:Math.floor((i-4)/2)%3;
   return {p,kind:shelter?'shelter':'umbrella',side,slot,umbrella:umbrella(p),phase:'normal',delay:1.2+(i*1.71)%5,age:0,join:p.path?joinPoint(p.path):0,trail:[],index:0,cover:0};
  });
- let raining=false;
+ let raining=false,snowing=false;
  function beginReverse(s){s.phase='return';s.trail=s.trail.slice(0,s.index).reverse();s.trail.push(s.joinPosition.clone());s.index=0;}
  function walkTrail(s,dt,speed){
   let budget=dt*speed;
@@ -35,7 +35,8 @@ export function createRainResponse(citizens,walkers){
   return s.index>=s.trail.length;
  }
  return {states,
-  before(dt,isRain){
+  before(dt,isRain,isSnow=false){
+   if(isSnow!==snowing){snowing=isSnow;for(const s of states)s.age=0;}
    if(isRain!==raining){raining=isRain;for(const s of states){s.age=0;
     if(raining){if(s.phase==='normal')s.phase='react';}
     else if(s.phase==='sheltered')s.phase='release';
@@ -62,7 +63,7 @@ export function createRainResponse(citizens,walkers){
   after(t,dt){for(const s of states){
    if(s.phase==='approach'&&walkTrail(s,dt,.82)){s.phase=raining?'sheltered':'release';s.age=0;}
    else if(s.phase==='return'&&walkTrail(s,dt,.48)){s.phase=raining?'react':'normal';s.age=0;s.p.distance=s.join;s.p.walkBlocked=false;}
-   const show=raining&&s.age>s.delay&&(s.kind==='umbrella'||!['sheltered','release'].includes(s.phase));
+   const show=s.age>s.delay&&((raining&&(s.kind==='umbrella'||!['sheltered','release'].includes(s.phase)))||(snowing&&s.p.id%3===0&&!['sheltered','release'].includes(s.phase)));
    s.cover=THREE.MathUtils.damp(s.cover,show?1:0,4,dt);s.umbrella.visible=s.cover>.015;s.umbrella.scale.setScalar(Math.max(.01,s.cover));
    if(s.cover>.2){s.p.arms[0].upper.rotation.x=-.65;s.p.arms[0].fore.rotation.x=-1.05;}
    if(['sheltered','release'].includes(s.phase)){s.p.legs.forEach(l=>{l.thigh.rotation.x=0;l.shin.rotation.x=0;});s.p.arms.forEach(a=>{a.upper.rotation.x=.05;a.fore.rotation.x=-.15;});s.p.body.position.y=.51;}

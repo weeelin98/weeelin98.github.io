@@ -97,8 +97,8 @@ export function createCitizens(scene,ferris,carousel){
   for(const index of [0,2,5,7]){const p=add(ferris.cabins[index].cabin,'sit',.56);p.root.position.set(0,-.93,-.06);p.area='ferris';}
   for(const index of [0,2]){const p=add(carousel.horses[index],'ride',.63);p.root.position.set(0,-.10,0);p.root.rotation.y=Math.PI/2;p.area='carousel';}
   const point=new THREE.Vector3(),ahead=new THREE.Vector3();
-  function update(t,dt,raining=false){
-    rainResponse?.before(dt,raining);
+  function update(t,dt,raining=false,snowing=false){
+    rainResponse?.before(dt,raining,snowing);
     for(const p of walkers){if(p.walkBlocked)continue;p.distance=(p.distance+dt*.42*(p.rainSpeed??1)/p.length)%1;p.path.getPointAt(p.distance,point);p.path.getPointAt((p.distance+.0002)%1,ahead);p.root.position.copy(point);p.root.rotation.y=Math.atan2(ahead.x-point.x,ahead.z-point.z);}
     for(const p of citizens){
       const f=t*p.rate+p.phase,s=Math.sin(f),walking=p.pose==='walk'||p.pose==='jog';

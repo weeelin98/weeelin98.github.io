@@ -2,6 +2,9 @@ import * as THREE from 'three';
 import {Reflector} from 'three/addons/objects/Reflector.js';
 import {glow,C} from './city.js';
 import {createSurroundings} from './surroundings.js';
+import {createSnow,createSnowfall} from './snow.js';
+import {createWinterLife} from './winter-life.js';
+import {ENVIRONMENT_TIMING} from './environment-cycle.js';
 
 // Existing roofs, authored from the model footprints. Drops stop above surfaces,
 // so open cutaway walls do not allow rain to fall through interior rooms.
@@ -56,8 +59,8 @@ function reflection(scene){
  return puddles;
 }
 
-export function createEnvironment({scene,renderer,ambient,sun,fill,city,ferris,carousel,displayRoot=scene}){
- const surroundings=createSurroundings(scene);
+export function createEnvironment({scene,renderer,ambient,sun,fill,city,ferris,carousel,people=null,displayRoot=scene}){
+ const surroundings=createSurroundings(scene,displayRoot);
  sun.shadow.autoUpdate=false;
  const rain=rainSystem(displayRoot),puddles=reflection(displayRoot),windows=new THREE.Group();displayRoot.add(windows);
  const windowMaterial=new THREE.MeshBasicMaterial({color:0xffc66f,transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide});
@@ -81,17 +84,32 @@ export function createEnvironment({scene,renderer,ambient,sun,fill,city,ferris,c
  const ground=[];city.city.traverse(o=>{if(o.isMesh&&o.material.color&&[C.road,0xf4f0e4].includes(o.material.color.getHex())){o.material=o.material.clone();ground.push({material:o.material,color:o.material.color.clone(),roughness:o.material.roughness});}});
  const facades=[];city.city.traverse(o=>{if(o.isMesh&&o.material.color&&!o.material.transparent&&!ground.some(g=>g.material===o.material)&&o.material!==glow){o.material=o.material.clone();facades.push({material:o.material,color:o.material.color.clone()});}});
  const white=new THREE.Color(0xffffff),rainSky=new THREE.Color(0xdde8ee),nightSky=new THREE.Color(0x111d35),daySun=new THREE.Color(0xfff2df),moon=new THREE.Color(0x93b9ed);
- let state='sunny',rainAmount=0,wetness=0,night=0;
- return {rain,puddles,lights,windows,bulbs,ground,surroundings,get state(){return state;},get rainAmount(){return rainAmount;},get wetness(){return wetness;},get night(){return night;},
-  setState(next){if(!['sunny','rain','night'].includes(next))return;state=next;sun.shadow.needsUpdate=true;surroundings.lunar.light.shadow.needsUpdate=true;if(renderer.shadowMap)renderer.shadowMap.needsUpdate=true;},
+ const snow=createSnow({displayRoot,city,park:surroundings.park}),snowfall=createSnowfall(displayRoot,snow.floorAt);
+ const winter=people?createWinterLife(people.citizens,snow.floorAt,displayRoot):null;
+ let day='day',weather='clear',rainAmount=0,wetness=0,night=0,snowAmount=0,snowCover=0;
+ let dayTransition=null,weatherTransition=null,transitioning=false;
+ const ease=t=>t*t*t*(t*(t*6-15)+10),duration=ENVIRONMENT_TIMING.transitionSeconds;
+ function refreshShadows(){sun.shadow.needsUpdate=true;surroundings.lunar.light.shadow.needsUpdate=true;if(renderer.shadowMap)renderer.shadowMap.needsUpdate=true;}
+ function setDay(next,options={}){if(!['day','night'].includes(next)||(day===next&&!dayTransition))return;if(day===next&&!options.duration)return;day=next;dayTransition={from:night,to:next==='night'?1:0,age:0,duration:options.duration??duration};refreshShadows();}
+ function setWeather(next,options={}){if(!['clear','rain','snow'].includes(next)||(weather===next&&!weatherTransition))return;if(weather===next&&!options.duration)return;weather=next;weatherTransition={rain:rainAmount,snow:snowAmount,age:0,duration:options.duration??duration};refreshShadows();}
+ return {rain,puddles,lights,windows,bulbs,ground,surroundings,snow,snowfall,winter,get day(){return day;},get weather(){return weather;},get state(){return weather==='clear'?(day==='night'?'night':'sunny'):weather;},get rainAmount(){return rainAmount;},get wetness(){return wetness;},get night(){return night;},get snowAmount(){return snowAmount;},get snowCover(){return snowCover;},setDay,setWeather,
+  initialize(initialDay){day=initialDay;weather='clear';night=day==='night'?1:0;rainAmount=snowAmount=snowCover=wetness=0;dayTransition=weatherTransition=null;refreshShadows();},
+  // Compatibility for earlier scene-check scripts. Production UI uses independent dimensions.
+  setState(next){if(next==='sunny'){setDay('day');setWeather('clear');}else if(next==='night')setDay('night');else if(['rain','snow'].includes(next))setWeather(next);},
   update(dt,animationDelta=dt){
-   rainAmount=THREE.MathUtils.damp(rainAmount,state==='rain'?1:0,1.15,dt);
-   wetness=THREE.MathUtils.damp(wetness,state==='rain'?1:0,state==='rain'?.38:.16,dt);
-   night=THREE.MathUtils.damp(night,state==='night'?1:0,.9,dt);
+   if(dayTransition){dayTransition.age=Math.min(1,dayTransition.age+dt/dayTransition.duration);night=THREE.MathUtils.lerp(dayTransition.from,dayTransition.to,ease(dayTransition.age));if(dayTransition.age===1)dayTransition=null;}
+   if(weatherTransition){weatherTransition.age=Math.min(1,weatherTransition.age+dt/weatherTransition.duration);const t=ease(weatherTransition.age);rainAmount=THREE.MathUtils.lerp(weatherTransition.rain,weather==='rain'?1:0,t);snowAmount=THREE.MathUtils.lerp(weatherTransition.snow,weather==='snow'?1:0,t);if(weatherTransition.age===1)weatherTransition=null;}
+   if(dayTransition||weatherTransition||transitioning){refreshShadows();transitioning=!!(dayTransition||weatherTransition);}
+   wetness=THREE.MathUtils.damp(wetness,rainAmount,rainAmount>wetness?.38:.16,dt);
+   // Clearing waits for falling snow to diminish; coverage always resumes from its current value.
+   const coverTarget=weather==='snow'?THREE.MathUtils.smoothstep(snowAmount,.18,.68):snowAmount>.4?snowCover:0;
+   snowCover=THREE.MathUtils.damp(snowCover,coverTarget,coverTarget>snowCover?.40:.30,dt);
+   snow.updateCoverage(snowCover);snowfall.update(animationDelta,snowAmount);
+   winter?.updateStyle(dt,snowAmount);
    scene.background.copy(white).lerp(rainSky,rainAmount*.8).lerp(nightSky,night);
-   ambient.intensity=2.1-night*1.48-rainAmount*.25;ambient.color.setHex(0xfff9ef).lerp(moon,night*.65);
-   sun.intensity=(2.8-rainAmount*1.7)*Math.pow(1-night,2);sun.color.copy(daySun);
-   fill.intensity=1.1-night*.92;renderer.toneMappingExposure=1.08+night*.06;
+   ambient.intensity=2.1-night*1.48-rainAmount*.25-snowAmount*.13;ambient.color.setHex(0xfff9ef).lerp(moon,Math.min(1,night*.65+snowAmount*.13));ambient.groundColor?.setHex(0xa1b4c0).lerp(new THREE.Color(0x7893ad),snowAmount*.5);
+   sun.intensity=(2.8-rainAmount*1.7-snowAmount*.70)*Math.pow(1-night,2);sun.color.copy(daySun);
+   fill.intensity=1.1-night*.92+snowAmount*.10;renderer.toneMappingExposure=1.08+night*.06-snowAmount*.06;
    surroundings.lunar.update(night);
    windowMaterial.opacity=night*.22;glow.emissiveIntensity=.08+night*1.15;bulbsMaterial.opacity=night*.9;
    for(const [l,power]of lights)l.intensity=power*night;
@@ -99,7 +117,7 @@ export function createEnvironment({scene,renderer,ambient,sun,fill,city,ferris,c
    for(const f of facades)f.material.color.copy(f.color).multiplyScalar(1-rainAmount*.06);
    puddles.visible=wetness>.015;puddles.material.uniforms.wetness.value=wetness;
    rain.update(animationDelta,rainAmount);
-  },requestShadows(first=false){sun.shadow.needsUpdate=first||night<.97;surroundings.lunar.light.shadow.needsUpdate=first||night>.03;},updateView(camera,wallDelta,time){surroundings.update(camera,wallDelta,time,rainAmount,night);},stats(){return {state,rainAmount,wetness,night,moonlight:surroundings.lunar.light.intensity};}
+  },updateLife(time,dt){if(dt>0)winter?.update(time,dt,snowAmount);},requestShadows(first=false){sun.shadow.needsUpdate=first||night<.97;surroundings.lunar.light.shadow.needsUpdate=first||night>.03;},updateView(camera,wallDelta,time){surroundings.update(camera,wallDelta,time,rainAmount,night,snowCover,snowAmount);snowfall.updateView(camera,renderer.getPixelRatio?.()??1);},stats(){return {day,weather,rainAmount,wetness,night,snowAmount,snowCover,moonlight:surroundings.lunar.light.intensity};}
  };
 }
 
