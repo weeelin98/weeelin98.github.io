@@ -59,9 +59,27 @@ export function addSignIllumination(sign){
  if(entry.id==='notes'){
   color=0xff643b;
   // Letter strokes are actual round tubes on standoffs, rotated as a word.
-  const glyphs=[[[[0,0],[0,.7],[.32,0],[.32,.7]]],[[[.16,0],[0,.1],[0,.6],[.16,.7],[.32,.6],[.32,.1],[.16,0]]],[[[0,.7],[.32,.7]],[[.16,.7],[.16,0]]],[[[.32,.7],[0,.7],[0,0],[.32,0]],[[0,.35],[.26,.35]]],[[[.32,.7],[0,.7],[0,.35],[.32,.35],[.32,0],[0,0]]]];
-  const colors=[0xff493d,0xffa036,0x429cff,0xffa036,0xff493d];
-  glyphs.forEach((strokes,i)=>{for(const stroke of strokes){const pts=stroke.map(([x,y])=>[-(y-.35),x+i*.43-1.02,z+.08]);glowTube(pts,colors[i],.026);}});
+  const alphabet={
+   M:[[[0,0],[0,.7],[.16,.36],[.32,.7],[.32,0]]],
+   Y:[[[0,.7],[.16,.35],[.32,.7]],[[.16,.35],[.16,0]]],
+   S:[[[.32,.7],[0,.7],[0,.35],[.32,.35],[.32,0],[0,0]]],
+   T:[[[0,.7],[.32,.7]],[[.16,.7],[.16,0]]],
+   O:[[[.16,0],[0,.1],[0,.6],[.16,.7],[.32,.6],[.32,.1],[.16,0]]],
+   R:[[[0,0],[0,.7],[.26,.7],[.32,.6],[.32,.43],[.26,.35],[0,.35]],[[.16,.35],[.32,0]]],
+  };
+  const text=entry.label.toUpperCase(),advance=.31,space=.16;
+  const length=[...text].reduce((n,c)=>n+(c===' '?space:advance),0)-advance+.256;
+  let cursor=-length/2;
+  for(const letter of text){
+   if(letter===' '){cursor+=space;continue;}
+   const color=letter==='M'||letter==='S'?0xff493d:letter==='T'||letter==='Y'?0xffa036:0x429cff;
+   for(const stroke of alphabet[letter]??[]){
+    const pts=stroke.map(([x,y])=>[-(y-.35),x*.8+cursor,z+.08]);
+    glowTube(pts,color,.039);
+   }
+   cursor+=advance;
+  }
+  group.userData.neonText=text;
   for(const y of [-.8,0,.8]){const pin=new THREE.Mesh(new THREE.CylinderGeometry(.022,.022,.12,6),new THREE.MeshStandardMaterial({color:0x777777}));pin.rotation.x=Math.PI/2;pin.position.set(0,y,z);group.add(pin);}
  }
  const light=new THREE.PointLight(color,0,['notes','projects'].includes(entry.id)?5.5:4,2);light.position.set(0,0,.55);light.castShadow=false;group.add(light);
