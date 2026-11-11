@@ -1,11 +1,11 @@
 // 城市入口唯一配置源。填写 href 后，招牌将打开真实页面。
 // id / buildingId 保持稳定；修改 label 不会改变模型结构。
 const contentEntries = [
-  {id:'about',buildingId:'tower',label:'About Me',description:'个人介绍与成长经历。内容将在后续加入。',status:'placeholder',href:'',color:'#183b59',position:[0,15.08,-1.13],rotation:.22,size:[4.1,1.43],mountBase:14,design:{shape:'rounded',mount:'fascia',font:'City Lilita',weight:400,fill:'#fff0cf',hoverFill:'#ffe3b0',text:'#183b59',rim:'#d47c62',thickness:.28,icon:'cup',motion:'fixed'}},
-  {id:'cv',buildingId:'library',label:'CV',description:'简明履历与简历下载。资料尚未添加。',status:'placeholder',href:'',color:'#214c70',position:[1.0,3.90,9.06],rotation:.70,size:[1.35,2.75],mountBase:2.53,design:{shape:'tag',mount:'blade',font:'City Bungee',weight:400,fill:'#214c70',hoverFill:'#2b5d85',text:'#fff9e7',rim:'#edc86b',thickness:.25,motion:'fixed'}},
-  {id:'projects',buildingId:'office',label:'Projects',description:'项目和作品展示。内容将在后续加入。',status:'placeholder',href:'',color:'#183b59',position:[-7.5,14.65,-.95],rotation:.25,size:[4.75,1.65],mountBase:13.34,design:{shape:'billboard',mount:'a-frame',font:'City Bungee',weight:400,fill:'#f0ce68',hoverFill:'#ffe198',text:'#183b59',rim:'#d47c62',thickness:.32,motion:'fixed'}},
+  {id:'about',buildingId:'tower',label:'About Me',icon:'about-profile',description:'个人介绍与成长经历。',status:'ready',href:'./about.html',color:'#183b59',position:[0,15.08,-1.13],rotation:.22,size:[4.1,1.43],mountBase:14,design:{shape:'rounded',mount:'fascia',font:'City Lilita',weight:400,fill:'#fff0cf',hoverFill:'#ffe3b0',text:'#183b59',rim:'#d47c62',thickness:.28,icon:'cup',motion:'fixed'}},
+  {id:'cv',buildingId:'library',label:'CV',description:'简明履历与简历下载。',status:'ready',href:'./resume/weilin-resume.pdf',color:'#214c70',position:[1.0,3.90,9.06],rotation:.70,size:[1.35,2.75],mountBase:2.53,design:{shape:'tag',mount:'blade',font:'City Bungee',weight:400,fill:'#214c70',hoverFill:'#2b5d85',text:'#fff9e7',rim:'#edc86b',thickness:.25,motion:'fixed'}},
+  {id:'projects',buildingId:'office',label:'Projects',description:'项目和作品展示。',status:'ready',href:'./about.html#projects',color:'#183b59',position:[-7.5,14.65,-.95],rotation:.25,size:[4.75,1.65],mountBase:13.34,design:{shape:'billboard',mount:'a-frame',font:'City Bungee',weight:400,fill:'#f0ce68',hoverFill:'#ffe198',text:'#183b59',rim:'#d47c62',thickness:.32,motion:'fixed'}},
   {id:'memo',buildingId:'cafe',label:'Memo',description:'个人记忆、照片、旅行与生活片段。内容将在后续加入。',status:'placeholder',href:'',color:'#b34d39',position:[-6.8,3.84,8.95],rotation:.3,size:[2.55,2.05],mountBase:2.52,design:{shape:'oval',mount:'hanging',font:'City Lilita',weight:400,fill:'#b34d39',hoverFill:'#a54534',text:'#fff5d7',rim:'#314c46',thickness:.24,motion:'hanging',doubleSided:true}},
-  {id:'contact',buildingId:'restaurant',label:'Contact Me',description:'邮箱与社交链接。联系方式尚未添加。',status:'placeholder',href:'',color:'#285644',position:[8,10.8,-.9],rotation:.28,size:[3.45,1.66],mountBase:9.28,design:{shape:'arch',mount:'canopy',font:'City Fredoka',weight:700,fill:'#285644',hoverFill:'#356e57',text:'#fff0bb',rim:'#eddb9d',thickness:.27,icon:'envelope',motion:'fixed'}},
+  {id:'contact',buildingId:'restaurant',label:'Contact Me',description:'邮箱与社交链接。',status:'ready',href:'./about.html#contact',color:'#285644',position:[8,10.8,-.9],rotation:.28,size:[3.45,1.66],mountBase:9.28,design:{shape:'arch',mount:'canopy',font:'City Fredoka',weight:700,fill:'#285644',hoverFill:'#356e57',text:'#fff0bb',rim:'#eddb9d',thickness:.27,icon:'envelope',motion:'fixed'}},
   {id:'notes',buildingId:'bakery',label:'Notes',description:'Coming Soon · 未来用于短文、学习记录和随想。',status:'coming-soon',href:'',color:'#244e3c',position:[-10.45,4.05,5.32],rotation:.4,size:[1.4,3.05],mountBase:2.53,design:{shape:'bookmark',mount:'bracket',font:'City Bungee',weight:400,fill:'#9ed3b5',hoverFill:'#b7e1c8',text:'#244e3c',rim:'#fff0cf',thickness:.23,motion:'fixed'}},
 ];
 
@@ -30,8 +30,8 @@ export const destinations=contentEntries.map(entry=>({
 }));
 
 // Dock-only Experience entrance; physical signs keep their existing six identities.
-export const navigationEntries=[destinations[0],{
- id:'experience',label:'Experience',regionId:'central',status:'placeholder',href:'',
+export const navigationEntries=[{...destinations[0],label:'Home',icon:'about-profile',href:'./'}, {
+ id:'experience',label:'Experience',icon:'home',regionId:'central',status:'ready',href:'./about.html#experience',
  description:'教育、工作与成长经历。完整内容将在后续加入。',color:'#ad6846',
 },...destinations.slice(1)];
 

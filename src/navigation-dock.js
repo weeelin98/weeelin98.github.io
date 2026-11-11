@@ -33,7 +33,7 @@ export function installNavigationDock({open}){
  for(const entry of navigationEntries){
   const button=document.createElement('button');button.type='button';button.className='dock-entry';button.dataset.destination=entry.id;button.setAttribute('aria-label',entry.label);button.style.setProperty('--entry-accent',entry.color);
   const icon=document.createElement('span');icon.className='dock-icon';icon.setAttribute('aria-hidden','true');
-  const image=document.createElement('img');image.src=`${import.meta.env.BASE_URL}icons/${entry.id}.png`;image.alt='';image.draggable=false;image.width=image.height=512;icon.append(image);
+  const image=document.createElement('img');image.src=`${import.meta.env.BASE_URL}icons/${entry.icon??entry.id}.png`;image.alt='';image.draggable=false;image.width=image.height=512;icon.append(image);
   const label=document.createElement('span');label.className='dock-label';label.textContent=entry.label;
   const slot=document.createElement('div');slot.className='dock-slot';slot.style.width=`${baseSize()}px`;
   button.append(icon,label);slot.append(button);list.append(slot);

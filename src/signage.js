@@ -30,7 +30,7 @@ function textTexture(entry,blank){
  }
  if(!blank){
   if(entry.id==='cv'&&entry.label==='CV'){words('C',W*.5,H*.34,H*.32,W*.72);words('V',W*.5,H*.73,H*.32,W*.72);}
-  else if(d.shape==='bookmark'){
+  else if(d.shape==='bookmark'||entry.id==='cv'){
    ctx.save();ctx.translate(W/2,H*.48);ctx.rotate(-Math.PI/2);words(entry.label.toUpperCase(),0,0,W*.66,H*.78);ctx.restore();
    ctx.fillRect(W*.26,H*.89,W*.48,H*.018);
   }else if(entry.id==='contact'){

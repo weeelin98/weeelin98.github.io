@@ -96,7 +96,7 @@ export function installInteractions({scene,camera,controls,canvas,signs,display=
  canvas.addEventListener('wheel',()=>{stop();if(down)down.moved=true;hideHover();},{passive:true});
  function hit(e){const r=canvas.getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);return picker.pick(ndc,camera);}
  function open(entry){
-   if(entry.href&&entry.status!=='coming-soon'){const url=new URL(entry.href,location.href);if(['http:','https:','mailto:'].includes(url.protocol))window.open(url.href,'_blank','noopener,noreferrer');return;}
+   if(entry.href&&entry.status!=='coming-soon'){const url=new URL(entry.href,location.href);if(['http:','https:','mailto:'].includes(url.protocol)){if(url.origin===location.origin)location.assign(url.href);else window.open(url.href,'_blank','noopener,noreferrer');}return;}
    stop();lastFocus=document.activeElement;title.textContent=entry.label;tag.textContent=`${entry.regionId.toUpperCase()} / ${entry.id.toUpperCase()}`;description.textContent=entry.description;
    panel.querySelector('.placeholder p').textContent=entry.status==='coming-soon'?'Coming Soon · 敬请期待':'这个入口已就绪。完整内容页面将在后续加入。';
    controls.enabled=false;hideHover();panel.showModal();close.focus();

@@ -20,9 +20,10 @@ Future pushes to `main` deploy automatically.
 ## Next development session
 
 Keep the completed city as the baseline. The six content entrances are configured
-in `src/content.js`: About Me, CV, Projects, Memo, Contact Me, and Notes. They still
-use placeholder content; Notes is marked coming-soon. Real content and destination
-pages remain to be developed.
+in `src/content.js`: About Me, CV, Projects, Memo, Contact Me, and Notes. About Me
+opens `about.html`; Projects and Contact use its sections and CV opens the supplied
+PDF. Memo and Notes remain placeholders. The shared dock's first icon is Home,
+returning to the city, and Experience opens the profile's experience section.
 
 Run `npm run dev -- --port 5173` for local development and `npm run check` plus
 `npm run build` before publishing changes.

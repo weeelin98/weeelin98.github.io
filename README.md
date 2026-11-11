@@ -1,5 +1,21 @@
 # Little City
 
+## About Me
+
+`about.html` is a separate, scrollable profile page with projects, experience,
+education, categorized stack and contact links based on the supplied resume.
+It loads no Three.js city scene. It supports dark/light themes and the shared dock.
+The city About Me sign opens this page. Experience / Projects / Contact dock
+entries point to its sections; CV opens the provided PDF. The first dock entrance
+is Home (the code-window icon), returning to the 3D city; Experience uses the
+developer portrait icon. Memo and Notes remain placeholders pending a content decision.
+Icons in `public/stack/` come from Simple Icons and official brand assets; source
+notes and the Simple Icons license are bundled. Technical methods use concept
+icons. The profile uses the user-supplied photograph, Georgia Tech and HKBU logos,
+and the Outlook contact address. It includes only the confirmed skill list.
+Chillax captions load from Fontshare. The page is published at
+https://weeelin98.github.io/about.html through the multi-page Vite build.
+
 A Three.js desktop miniature-city portfolio, running locally with Vite.
 
 ```sh
