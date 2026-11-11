@@ -5,10 +5,10 @@
 `about.html` is a separate, scrollable profile page with projects, experience,
 education, categorized stack and contact links based on the supplied resume.
 It loads no Three.js city scene. It supports dark/light themes and the shared dock.
-The city About Me sign opens this page. Experience / Projects / Contact dock
+The city About Me sign opens this page. About Me / Projects / Contact dock
 entries point to its sections; CV opens the provided PDF. The first dock entrance
-is Home (the code-window icon), returning to the 3D city; Experience uses the
-developer portrait icon. Memo and Notes remain placeholders pending a content decision.
+is Home (the code-window icon), returning to the 3D city; About Me uses the
+developer portrait icon. The shared dock has five entries: Home, About Me, Projects, Notes, Contact. Notes remains a placeholder.
 Icons in `public/stack/` come from Simple Icons and official brand assets; source
 notes and the Simple Icons license are bundled. Technical methods use concept
 icons. The profile uses the user-supplied photograph, Georgia Tech and HKBU logos,

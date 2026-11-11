@@ -29,11 +29,15 @@ export const destinations=contentEntries.map(entry=>({
  camera:locations.find(place=>place.id===entry.buildingId).camera,
 }));
 
-// Dock-only Experience entrance; physical signs keep their existing six identities.
-export const navigationEntries=[{...destinations[0],label:'Home',icon:'about-profile',href:'./'}, {
- id:'experience',label:'Experience',icon:'home',regionId:'central',status:'ready',href:'./about.html#experience',
- description:'教育、工作与成长经历。完整内容将在后续加入。',color:'#ad6846',
-},...destinations.slice(1)];
+// Five shared shortcuts; physical city signs keep their existing identities.
+export const navigationEntries=[
+ {...destinations[0],id:'home',label:'Home',icon:'about-profile',href:'./'},
+ {...destinations[0],label:'About Me',icon:'home'},
+ ...['projects','notes','contact'].map(id=>{
+  const entry=destinations.find(item=>item.id===id);
+  return id==='contact'?{...entry,label:'Contact'}:entry;
+ }),
+];
 
 
 
