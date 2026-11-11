@@ -6,7 +6,9 @@
 education, categorized stack and contact links based on the supplied resume.
 It loads no Three.js city scene. It supports dark/light themes and the shared dock.
 The city About Me sign opens this page. About Me / Projects / Contact dock
-entries point to its sections; CV opens the provided PDF. The first dock entrance
+entries point to its sections. The former CV sign is now Experience and opens the
+experience section; the former Memo sign is a decorative coffee-cup sign without
+a content click target. The first dock entrance
 is Home (the code-window icon), returning to the 3D city; About Me uses the
 developer portrait icon. The shared dock has five entries: Home, About Me, Projects, Notes, Contact. Notes remains a placeholder.
 Icons in `public/stack/` come from Simple Icons and official brand assets; source
@@ -17,6 +19,22 @@ Chillax captions load from Fontshare. The page is published at
 https://weeelin98.github.io/about.html through the multi-page Vite build.
 
 A Three.js desktop miniature-city portfolio, running locally with Vite.
+
+## Shop illumination
+
+About Me has a warm-white edge, the enlarged horizontal Experience sign has 28
+warm-yellow bulbs, Notes uses physical red/orange/blue tube lettering, and Projects
+has an orange tube frame with a warm-yellow emissive lightbox. Contact Me keeps
+its original unlit frame.
+Four short-range non-shadow-casting lights provide local spill; persistent core
+and halo geometry avoids a full-scene bloom pass. Notes and Projects combine
+hot pale filaments, saturated tube shells, soft radial light sprites and stronger
+nearby surface spill, following the supplied neon-night references. Night increases brightness,
+hover adds a subtle lift in lighting, and Notes has slow breathing with rare dips.
+Animation uses simulation time, so pause freezes the variation; reduced-motion
+mode makes Notes steady. Buildings, mount positions and the five dock items stay
+unchanged. Daytime snowfall uses softer lighting and reduced exposure to retain
+snow detail without changing nighttime or other weather lighting.
 
 ```sh
 npm install

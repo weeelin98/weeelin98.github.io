@@ -14,6 +14,7 @@ export function createPicker(scene,signs,displayRoot=null){
  const q=new THREE.Quaternion(),normal=new THREE.Vector3(),toCamera=new THREE.Vector3(),local=new THREE.Vector3(),clamped=new THREE.Vector3();
  scene.traverse(o=>{if(o.isMesh&&o.visible&&(!Array.isArray(o.material)?o.material.visible!==false:true))meshes.push(o);});
  for(const sign of signs){
+   if(sign.userData.entry?.interaction==='decoration')continue;
    const size=sign.userData.size?.clone()??new THREE.Box3().setFromBufferAttribute(sign.geometry.attributes.position).getSize(new THREE.Vector3());
    const pad=new THREE.Mesh(new THREE.BoxGeometry(size.x+.5,size.y+.58,size.z+.03),new THREE.MeshBasicMaterial({visible:false}));
    pad.position.copy(sign.position);pad.position.y+=.07;pad.quaternion.copy(sign.quaternion);pad.updateMatrixWorld(true);pad.userData={sign,size};pads.push(pad);

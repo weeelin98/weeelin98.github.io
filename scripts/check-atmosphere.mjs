@@ -16,9 +16,9 @@ const bounds=new THREE.Box3().setFromObject(scene);bounds.max.y=Math.max(bounds.
 let hw=0,hh=0;for(const x of [bounds.min.x,bounds.max.x])for(const y of[bounds.min.y,bounds.max.y])for(const z of[bounds.min.z,bounds.max.z]){const p=new THREE.Vector3(x,y,z).applyMatrix4(camera.matrixWorldInverse);hw=Math.max(hw,Math.abs(p.x));hh=Math.max(hh,Math.abs(p.y));}
 const aspect=1101/1244,h=Math.max(hh,hw/aspect)*1.12;camera.left=-h*aspect;camera.right=h*aspect;camera.top=h;camera.bottom=-h;camera.updateProjectionMatrix();
 const picker=createPicker(scene,city.signs),feedback=createSignFeedback(city.signs);
-assert.deepEqual(destinations.map(e=>e.label),['About Me','CV','Projects','Memo','Contact Me','Notes']);
+assert.deepEqual(destinations.map(e=>e.label),['About Me','Experience','Projects','Coffee','Contact Me','Notes']);
 assert.equal(destinations.find(e=>e.label==='Notes').status,'coming-soon');
-for(const sign of city.signs){const p=sign.position.clone().project(camera);const result=picker.pick(new THREE.Vector2(p.x,p.y),camera);assert.equal(result.entry?.id,sign.userData.entry.id,`${sign.userData.entry.label} must be visible and pickable from overview`);assert.ok(Math.abs(p.x)<1&&Math.abs(p.y)<1);}
+for(const sign of city.signs.filter(s=>s.userData.entry.interaction!=='decoration')){const p=sign.position.clone().project(camera);const result=picker.pick(new THREE.Vector2(p.x,p.y),camera);assert.equal(result.entry?.id,sign.userData.entry.id,`${sign.userData.entry.label} must be visible and pickable from overview`);assert.ok(Math.abs(p.x)<1&&Math.abs(p.y)<1);}
 const target=city.signs[0],base=target.position.clone();
 for(let i=0;i<180;i++)feedback.update(target,1/60,i/60);
 assert.equal(target.scale.x,1,'fixed fascia stays attached');

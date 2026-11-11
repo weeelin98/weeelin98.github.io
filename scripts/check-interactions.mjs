@@ -27,5 +27,5 @@ for(const place of locations){
 }
 flight.go();flight.update(flight.active.start+1500);assert.ok(camera.position.distanceTo(home)<1e-8);assert.equal(camera.zoom,1);
 flight.go(locations[0].camera);flight.update(flight.active.start+500);flight.cancel();const canceled=camera.position.clone();flight.update(performance.now()+2000);assert.ok(camera.position.equals(canceled),'manual interrupt freezes the automatic flight');
-for(const entry of destinations){assert.equal(entry.interaction,'content');assert.ok(entry.regionId);assert.ok(entry.camera);assert.equal(typeof entry.href,'string');}
+for(const entry of destinations){assert.equal(entry.interaction,entry.id==='memo'?'decoration':'content');assert.ok(entry.regionId);assert.ok(entry.camera);assert.equal(typeof entry.href,'string');}
 console.log('Interaction checks passed: occlusion, hit padding, sign priority/backface, 9 camera targets, overview return, manual interrupt and content configuration.');

@@ -107,9 +107,10 @@ export function createEnvironment({scene,renderer,ambient,sun,fill,city,ferris,c
    snow.updateCoverage(snowCover);snowfall.update(animationDelta,snowAmount);
    winter?.updateStyle(dt,snowAmount);
    scene.background.copy(white).lerp(rainSky,rainAmount*.8).lerp(nightSky,night);
-   ambient.intensity=2.1-night*1.48-rainAmount*.25-snowAmount*.13;ambient.color.setHex(0xfff9ef).lerp(moon,Math.min(1,night*.65+snowAmount*.13));ambient.groundColor?.setHex(0xa1b4c0).lerp(new THREE.Color(0x7893ad),snowAmount*.5);
-   sun.intensity=(2.8-rainAmount*1.7-snowAmount*.70)*Math.pow(1-night,2);sun.color.copy(daySun);
-   fill.intensity=1.1-night*.92+snowAmount*.10;renderer.toneMappingExposure=1.08+night*.06-snowAmount*.06;
+   const daytimeSnow=snowAmount*(1-night);
+   ambient.intensity=2.1-night*1.48-rainAmount*.25-snowAmount*.13-daytimeSnow*.30;ambient.color.setHex(0xfff9ef).lerp(moon,Math.min(1,night*.65+snowAmount*.13));ambient.groundColor?.setHex(0xa1b4c0).lerp(new THREE.Color(0x7893ad),snowAmount*.5);
+   sun.intensity=(2.8-rainAmount*1.7-snowAmount*.70-daytimeSnow*.45)*Math.pow(1-night,2);sun.color.copy(daySun);
+   fill.intensity=1.1-night*.92+snowAmount*.10-daytimeSnow*.18;renderer.toneMappingExposure=1.08+night*.06-snowAmount*.06-daytimeSnow*.12;
    surroundings.lunar.update(night);
    windowMaterial.opacity=night*.22;glow.emissiveIntensity=.08+night*1.15;bulbsMaterial.opacity=night*.9;
    for(const [l,power]of lights)l.intensity=power*night;

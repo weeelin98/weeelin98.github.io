@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {addSignIllumination} from './sign-lighting.js';
 
 function rounded(w,h,r){
  const s=new THREE.Shape(),x=-w/2,y=-h/2;
@@ -29,8 +30,12 @@ function textTexture(entry,blank){
   ctx.fillText(text,x,y);
  }
  if(!blank){
-  if(entry.id==='cv'&&entry.label==='CV'){words('C',W*.5,H*.34,H*.32,W*.72);words('V',W*.5,H*.73,H*.32,W*.72);}
-  else if(d.shape==='bookmark'||entry.id==='cv'){
+  if(entry.interaction==='decoration'){
+   ctx.lineWidth=H*.035;ctx.beginPath();ctx.moveTo(W*.30,H*.37);ctx.lineTo(W*.30,H*.62);ctx.quadraticCurveTo(W*.5,H*.86,W*.66,H*.62);ctx.lineTo(W*.66,H*.37);ctx.closePath();ctx.stroke();ctx.beginPath();ctx.arc(W*.69,H*.49,W*.09,-Math.PI/2,Math.PI/2);ctx.stroke();ctx.beginPath();ctx.moveTo(W*.26,H*.78);ctx.lineTo(W*.71,H*.78);ctx.stroke();
+   for(const x of [.4,.51,.61]){ctx.beginPath();ctx.moveTo(W*x,H*.28);ctx.quadraticCurveTo(W*(x-.04),H*.22,W*x,H*.16);ctx.stroke();}
+  }else if(entry.id==='notes'){} // Physical neon tubes supply the lettering.
+  else if(entry.id==='cv'&&entry.label==='CV'){words('C',W*.5,H*.34,H*.32,W*.72);words('V',W*.5,H*.73,H*.32,W*.72);}
+  else if(d.shape==='bookmark'){
    ctx.save();ctx.translate(W/2,H*.48);ctx.rotate(-Math.PI/2);words(entry.label.toUpperCase(),0,0,W*.66,H*.78);ctx.restore();
    ctx.fillRect(W*.26,H*.89,W*.48,H*.018);
   }else if(entry.id==='contact'){
@@ -55,7 +60,7 @@ export function makeNavigationSign(entry,blank=false){
  const geometry=new THREE.ExtrudeGeometry(outline,{depth:t,steps:1,bevelEnabled:true,bevelSegments:3,bevelSize:.035,bevelThickness:.025,curveSegments:24});geometry.translate(0,0,-t/2);
  const rim=new THREE.MeshStandardMaterial({color:d.rim,roughness:.58});
  const body=new THREE.Mesh(geometry,rim);body.castShadow=true;body.receiveShadow=true;plate.add(body);
- const fill=new THREE.MeshBasicMaterial({color:d.fill,toneMapped:false});
+ const fill=entry.id==='projects'?new THREE.MeshStandardMaterial({color:d.fill,emissive:0xffce70,emissiveIntensity:.3,roughness:.5}):new THREE.MeshBasicMaterial({color:d.fill,toneMapped:false});
  const inkMaterial=new THREE.MeshBasicMaterial({map:textTexture(entry,blank),transparent:true,depthWrite:false,toneMapped:false});
  const inks=[];const frontDepth=t/2+.055;
  for(const side of d.doubleSided?[1,-1]:[1]){
@@ -68,6 +73,7 @@ export function makeNavigationSign(entry,blank=false){
   for(const x of [-w/2+.12,w/2-.12])for(const y of [-h/2+.12,h/2-.12]){const bolt=new THREE.Mesh(boltGeometry,metal);bolt.position.set(x,y,t/2+.055);plate.add(bolt);}
  }
  root.userData={type:'sign',entry,size:new THREE.Vector3(w,h,t+.11),frontDepth,fillMaterial:fill,inkMeshes:inks,motionGroup:motion,plateGroup:plate,homePosition:root.position.clone()};
+ if(!blank)addSignIllumination(root);
  return root;
 }
 
@@ -101,6 +107,7 @@ export function createSignFeedback(signs){
  return {states,update(hovered,wallDelta,simulationTime){for(const s of states){
   const data=s.sign.userData,d=data.entry.design;
   s.amount=THREE.MathUtils.damp(s.amount,s.sign===hovered?1:0,10,wallDelta);
+  data.hoverAmount=s.amount;
   data.fillMaterial.color.lerpColors(s.from,s.to,s.amount);
   if(d.motion==='hanging'){
    data.plateGroup.scale.setScalar(1+s.amount*.025);

@@ -10,6 +10,8 @@ import {createDisplayController} from './display.js';
 import {loadSignFonts} from './sign-fonts.js';
 import {createEnvironmentCycle} from './environment-cycle.js';
 import {installNavigationDock} from './navigation-dock.js';
+import {updateSignIllumination} from './sign-lighting.js';
+const reducedSceneMotion=matchMedia('(prefers-reduced-motion: reduce)');
 import './style.css';
 const loadedSignFonts=await loadSignFonts();
 
@@ -128,6 +130,7 @@ function animate(now=performance.now()) {
   interaction.update(now,wallDelta,elapsed);
   if(display.consumeChange()){environment.requestShadows();renderer.shadowMap.needsUpdate=true;}
   environment.updateView(camera,wallDelta,elapsed);
+  updateSignIllumination(city.signs,environment.night,elapsed,reducedSceneMotion.matches);
   frameCount++;frameTotal+=Math.min(now-lastFrame,250);lastFrame=now;
   if(now-lastMetadata>250){syncEnvironmentUI();canvas.dataset.paused=String(clock.paused);canvas.dataset.simulationTime=elapsed.toFixed(3);canvas.dataset.frameMs=(frameTotal/frameCount).toFixed(2);canvas.dataset.drawCalls=String(renderer.info.render.calls);frameTotal=0;frameCount=0;lastMetadata=now;
   canvas.dataset.day=environment.day;canvas.dataset.weather=environment.weather;canvas.dataset.dayMode=cycle.dayMode;canvas.dataset.weatherMode=cycle.weatherMode;canvas.dataset.autoWeatherElapsed=cycle.elapsed.toFixed(2);canvas.dataset.snowCover=environment.snowCover.toFixed(3);canvas.dataset.snowAmount=environment.snowAmount.toFixed(3);canvas.dataset.triangles=String(renderer.info.render.triangles);
