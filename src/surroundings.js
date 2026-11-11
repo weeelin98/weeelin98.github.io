@@ -43,7 +43,7 @@ export function createSurroundings(scene,displayRoot=scene){
    const cloudiness=Math.min(1,rain+fallingSnow*.50);
    sky.position.copy(camera.position);sky.material.uniforms.rain.value=cloudiness;sky.material.uniforms.night.value=night;
    scene.fog.color.copy(fogDay).lerp(fogRain,rain).lerp(fogNight,night);
-   park.update(rain,night,snow);
+   park.update(rain,night,snow,time);
    cloudMat.color.setHex(0xfff4dc).lerp(new THREE.Color(0x9bafbd),cloudiness).lerp(new THREE.Color(0x34435b),night);cloudMat.opacity=.9-.6*night;
    stormMat.opacity=cloudiness*.6*(1-night*.6);
    fwd.set(0,0,-1).applyQuaternion(camera.quaternion);right.set(1,0,0).applyQuaternion(camera.quaternion);up.set(0,1,0).applyQuaternion(camera.quaternion);

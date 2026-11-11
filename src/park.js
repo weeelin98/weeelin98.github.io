@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
 const smooth=(a,b,x)=>THREE.MathUtils.smoothstep(x,a,b);
 const creekPoints=[[27.3,5],[26.7,9],[25.5,14],[24.8,17.2],[22.6,23]];
@@ -67,15 +68,35 @@ export function createPark(root){
  for(const z of [-.18,0,.18])benchPart(0,.48,z,1.6,.07,.15);for(const y of [.78,1.0])benchPart(0,y,-.28,1.6,.13,.07);for(const x of [-.6,.6]){benchPart(x,.23,0,.10,.46,.45);benchPart(x,.73,-.28,.07,.70,.07);}
  // Unequal clusters: open lawn between them is intentional.
  const ball=new THREE.SphereGeometry(1,14,10),cone=new THREE.ConeGeometry(1,1,12),cylinder=new THREE.CylinderGeometry(1,1,1,8);
+ let modelSnow=null;
+ const ornaments=Array.from({length:8},()=>[]),stars=[],treePlacements=[];
+ const christmasCanopy=new THREE.ConeGeometry(1,1,10,1),positions=christmasCanopy.attributes.position;
+ for(let i=0;i<positions.count;i++){
+  const x=positions.getX(i),z=positions.getZ(i);
+  if(positions.getY(i)<0&&Math.hypot(x,z)>.5)positions.setY(i,-.5+.09*Math.cos(Math.atan2(z,x)*5));
+ }
+ positions.needsUpdate=true;christmasCanopy.computeVertexNormals();
+ const reducedChristmasMotion=typeof matchMedia==='function'?matchMedia('(prefers-reduced-motion: reduce)'):null;
  const foliage=[],pines=[],wood=[],rocks=[],flowers=[],tufts=[],snowAnchors=[],dummy=new THREE.Object3D();
  const clusters=[{p:[-23,-10],trees:3,shrubs:8},{p:[19,-21],trees:2,shrubs:4},{p:[-23,14],trees:2,shrubs:6},{p:[-9,25],trees:3,shrubs:5},{p:[25,9],trees:1,shrubs:7},{p:[4,-26],trees:2,shrubs:4}];
  for(let c=0;c<clusters.length;c++){
   const {p:[cx,cz],trees,shrubs}=clusters[c];
   for(let j=0;j<trees;j++){
    const x=cx+Math.sin(j*2.1+c)*1.65,z=cz+Math.cos(j*2.3+c)*1.3,y=terrainHeight(x,z),s=.75+((c+j)%3)*.14;
+   treePlacements.push({x,y,z,scale:s});
    wood.push({p:[x,y+.78*s,z],s:[.105,1.56*s,.105]});
-   if((c+j)%3===0){for(let tier=0;tier<3;tier++){const r=(.94-tier*.22)*s,h=1.10*s,cy=y+(.90+tier*.53)*s;pines.push({p:[x,cy,z],s:[r,h,r]});snowAnchors.push({kind:'cone',p:[x,cy+.16*s,z],s:[r*.83,h*.73,r*.83]});}}
-   else for(let lobe=0;lobe<3;lobe++){const lx=x+Math.sin(lobe*2.4)*.38*s,lz=z+Math.cos(lobe*2.4)*.28*s,ly=y+(1.58+(lobe===0?.30:0))*s;foliage.push({p:[lx,ly,lz],s:[.64*s,.74*s,.65*s]});snowAnchors.push({kind:'dome',p:[lx,ly+.18*s,lz],s:[.65*s,.59*s,.66*s]});}
+   for(let tier=0;tier<4;tier++){
+    const r=(1.20-tier*.23)*s,h=1.15*s,cy=y+(1.0+tier*.50)*s;
+    pines.push({p:[x,cy,z],s:[r,h,r]});
+    // Tree snow is shaded on the imported branch surfaces.
+    const count=2;
+    for(let k=0;k<count;k++){
+     const angle=k/count*Math.PI*2+tier*.73+c*.41,rad=r*.92;
+     ornaments[(k+tier*3+c+j)%8].push({p:[x+Math.cos(angle)*rad,cy-h*.34,z+Math.sin(angle)*rad],s:[.08*s,.09*s,.08*s],treeIndex:treePlacements.length-1});
+    }
+   }
+   stars.push({p:[x,y+3.22*s,z],s:[.16*s,.23*s,.16*s]});
+
   }
   for(let j=0;j<shrubs;j++){const a=j*2.399+c,x=cx+Math.sin(a)*(1.7+j*.16),z=cz+Math.cos(a)*(1.5+j*.15),y=terrainHeight(x,z),r=.28+j%3*.09;foliage.push({p:[x,y+.22,z],s:[r,.31,r*1.17]});snowAnchors.push({kind:'dome',p:[x,y+.27,z],s:[r*1.05,.26,r*1.13]});
    if(j%3===0)rocks.push({p:[x+.58,y+.10,z-.28],s:[.28,.16,.24]});
@@ -86,6 +107,56 @@ export function createPark(root){
  for(let i=0;i<20;i++){const t=(i+.35)/20,c=creekCurve.getPoint(t),side=creekCurve.getTangent(t).cross(new THREE.Vector3(0,1,0)).normalize(),s=i%2?1:-1,x=c.x+side.x*s*.91,z=c.z+side.z*s*.91;rocks.push({p:[x,terrainHeight(x,z)+.10,z],s:[.16+(i%3)*.04,.12,.21]});}
  const colorRecords=[],plantMeshes=[];
  function instances(name,geometry,list,color){const material=new THREE.MeshStandardMaterial({color,roughness:.98}),mesh=new THREE.InstancedMesh(geometry,material,list.length);mesh.name=name;list.forEach((r,i)=>{dummy.position.set(...r.p);dummy.scale.set(...r.s);dummy.rotation.set(0,i*1.7,0);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);const tint=r.tint?new THREE.Color(r.tint):name.includes('broadleaf')?new THREE.Color([0xe5edc9,0xbdd6ab,0xd8e5b5][i%3]):new THREE.Color().setScalar(.91+i%4*.03);mesh.setColorAt(i,tint);});mesh.castShadow=mesh.receiveShadow=true;root.add(mesh);colorRecords.push({material,color:new THREE.Color(color)});plantMeshes.push(mesh);return mesh;}
- instances('park-broadleaf-and-shrubs',ball,foliage,0x63884c);instances('park-layered-evergreens',cone,pines,0x35664c);instances('park-trunks',cylinder,wood,0x9b7852);instances('park-stones',ball,rocks,0xa5ab9b);instances('park-small-flowers',ball,flowers,0xffffff);instances('park-sparse-tufts',cone,tufts,0x6a8a43);
- return {grass,winterGround,snowAnchors,path,pathCurve,terrainHeight,backdrop,stream,bridge,bench,plantMeshes,clusters,update(rain,night,snow=0){groundMaterial.color.setHex(0xffffff).multiplyScalar(1-.10*rain-.48*night);surfaceUniforms.snow.value=snow;winterGround.visible=snow>.005;winterGround.position.y=.03+.15*snow;winterMat.color.setHex(0xf2f5f4);for(const r of colorRecords)r.material.color.copy(r.color).multiplyScalar(1-.09*rain-.32*night);pathMaterial.color.setHex(0xd5bd92).multiplyScalar(1-.13*rain-.28*night);streamMaterial.color.setHex(0x69a9b5).multiplyScalar(1-.12*rain-.50*night);timber.color.setHex(0xb5895f).multiplyScalar(1-night*.3);trim.color.setHex(0xe2c39b).multiplyScalar(1-night*.3);backdropMaterial.color.setHex(0xe9e7d9).lerp(new THREE.Color(0xc5cdd0),rain).lerp(new THREE.Color(0x162236),night);}};
+ instances('park-broadleaf-and-shrubs',ball,foliage,0x63884c);const firs=instances('park-layered-evergreens',christmasCanopy,pines,0x41664c);firs.material.flatShading=true;const trunks=instances('park-trunks',cylinder,wood,0x9b7852);instances('park-stones',ball,rocks,0xa5ab9b);instances('park-small-flowers',ball,flowers,0xffffff);instances('park-sparse-tufts',cone,tufts,0x6a8a43);
+ // Keep procedural trees until the bundled model has loaded successfully.
+ if(typeof window!=='undefined'){
+  new GLTFLoader().load(`${import.meta.env.BASE_URL}models/christmas-pine.glb`,gltf=>{
+   const source=gltf.scene,bounds=new THREE.Box3().setFromObject(source),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3()),normalizer=new THREE.Group();
+   source.position.set(-center.x,-bounds.min.y,-center.z);normalizer.add(source);
+   const unitScale=3.3/size.y;normalizer.scale.setScalar(unitScale);normalizer.updateMatrixWorld(true);
+   source.traverse(part=>{
+    if(!part.isMesh)return;
+    const geometry=part.geometry.clone().applyMatrix4(part.matrixWorld),material=part.material.clone();
+    material.flatShading=true;material.roughness=.85;
+    const mesh=new THREE.InstancedMesh(geometry,material,treePlacements.length);mesh.name='christmas-pine-model';
+    treePlacements.forEach((tree,i)=>{dummy.position.set(tree.x,tree.y,tree.z);dummy.rotation.set(0,i*1.7,0);dummy.scale.setScalar(tree.scale);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);});
+    mesh.castShadow=mesh.receiveShadow=true;root.add(mesh);plantMeshes.push(mesh);colorRecords.push({material,color:material.color.clone()});
+   });
+   // Mount the sparse decorations against the real branch silhouette.
+   const ray=new THREE.Raycaster(),upAxis=new THREE.Vector3(0,1,0);
+   ornamentMeshes.forEach((mesh,colorIndex)=>{
+    ornaments[colorIndex].forEach((record,i)=>{
+     const tree=treePlacements[record.treeIndex],angle=record.treeIndex*1.7;
+     const local=new THREE.Vector3(...record.p).sub(new THREE.Vector3(tree.x,tree.y,tree.z)).divideScalar(tree.scale).applyAxisAngle(upAxis,-angle);
+     const outward=new THREE.Vector3(local.x,0,local.z).normalize();
+     ray.set(new THREE.Vector3(outward.x*4,local.y,outward.z*4),outward.clone().negate());
+     const hit=ray.intersectObject(source,true).find(h=>h.object.material.name!=='Wood');
+     const position=hit?hit.point.clone().addScaledVector(outward,.06):local;
+     position.applyAxisAngle(upAxis,angle).multiplyScalar(tree.scale).add(new THREE.Vector3(tree.x,tree.y,tree.z));
+     dummy.position.copy(position);dummy.rotation.set(0,0,0);dummy.scale.set(...record.s);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);
+    });mesh.instanceMatrix.needsUpdate=true;
+   });
+   fetch(`${import.meta.env.BASE_URL}models/pine-snow.json`).then(r=>{if(!r.ok)throw new Error('Snow geometry unavailable');return r.json();}).then(vertices=>{
+    const snowGeometry=new THREE.BufferGeometry();snowGeometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));snowGeometry.computeVertexNormals();
+    const snowMaterial=new THREE.MeshStandardMaterial({color:0xf0f4f5,roughness:1,transparent:true,opacity:0,polygonOffset:true,polygonOffsetFactor:-1});
+    modelSnow=new THREE.InstancedMesh(snowGeometry,snowMaterial,treePlacements.length);modelSnow.name='pine-exposed-branch-snow';
+    treePlacements.forEach((tree,i)=>{dummy.position.set(tree.x,tree.y,tree.z);dummy.rotation.set(0,i*1.7,0);dummy.scale.setScalar(tree.scale);dummy.updateMatrix();modelSnow.setMatrixAt(i,dummy.matrix);});
+    modelSnow.receiveShadow=true;root.add(modelSnow);
+   }).catch(error=>console.warn('Branch snow unavailable.',error));
+   firs.visible=false;trunks.visible=false;
+
+   root.userData.christmasTreeAsset='quaternius-pine';
+  },undefined,error=>{console.warn('Pine model unavailable; keeping procedural trees.',error);});
+ }
+ const ornamentColors=[0xff2020,0xffd500,0x00aaff,0xff31b5,0x30ef54,0xff7400,0x8045ff,0x08e5df],holidayMaterials=[],ornamentMeshes=[];
+ ornaments.forEach((list,i)=>{
+  const mesh=instances(`christmas-baubles-${i}`,new THREE.SphereGeometry(1,10,8),list,ornamentColors[i]);
+  ornamentMeshes.push(mesh);mesh.material.roughness=.3;mesh.material.metalness=.05;mesh.material.toneMapped=false;mesh.material.emissive.setHex(ornamentColors[i]);mesh.material.emissiveIntensity=.05;holidayMaterials.push(mesh.material);
+ });
+ const toppers=instances('christmas-gold-toppers',new THREE.OctahedronGeometry(1,0),stars,0xffda64);toppers.material.emissive.setHex(0xffbd35);holidayMaterials.push(toppers.material);
+ return {grass,winterGround,snowAnchors,path,pathCurve,terrainHeight,backdrop,stream,bridge,bench,plantMeshes,clusters,update(rain,night,snow=0,time=0){if(modelSnow){modelSnow.visible=snow>.01;modelSnow.material.opacity=snow;}holidayMaterials.forEach((material,i)=>{
+ const pulse=reducedChristmasMotion?.matches?1:.18+.82*Math.pow(.5+.5*Math.sin(time*2.1+i*1.93),2);
+ material.emissiveIntensity=.025+night*(i===8?.6:.9*pulse);
+ });groundMaterial.color.setHex(0xffffff).multiplyScalar(1-.10*rain-.48*night);surfaceUniforms.snow.value=snow;winterGround.visible=snow>.005;winterGround.position.y=.03+.15*snow;winterMat.color.setHex(0xf2f5f4);for(const r of colorRecords)r.material.color.copy(r.color).multiplyScalar(1-.09*rain-.32*night);pathMaterial.color.setHex(0xd5bd92).multiplyScalar(1-.13*rain-.28*night);streamMaterial.color.setHex(0x69a9b5).multiplyScalar(1-.12*rain-.50*night);timber.color.setHex(0xb5895f).multiplyScalar(1-night*.3);trim.color.setHex(0xe2c39b).multiplyScalar(1-night*.3);backdropMaterial.color.setHex(0xe9e7d9).lerp(new THREE.Color(0xc5cdd0),rain).lerp(new THREE.Color(0x162236),night);}};
 }
+
