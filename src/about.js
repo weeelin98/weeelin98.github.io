@@ -1,6 +1,8 @@
 import './style.css';
 import './about.css';
 import {installNavigationDock} from './navigation-dock.js';
+import {createDockAudio} from './dock-audio.js';
+const profileSounds=createDockAudio(document.querySelector('#navigation-dock'));
 
 const stacks=[
  ['Languages',[
@@ -50,10 +52,10 @@ function setTheme(light){document.body.classList.toggle('light-profile',light);d
 let light=false;try{light=localStorage.getItem('profile-theme')==='light';}catch{}setTheme(light);
 themeButton.addEventListener('click',()=>{light=!light;setTheme(light);try{localStorage.setItem('profile-theme',light?'light':'dark');}catch{}});
 const dialog=document.querySelector('#profile-placeholder');dialog.querySelector('.close').addEventListener('click',()=>dialog.close());
-installNavigationDock({open(entry){
+installNavigationDock({sounds:profileSounds,open(entry){
  if(entry.href&&entry.status!=='coming-soon'){location.assign(new URL(entry.href,location.href).href);return;}
  dialog.querySelector('h2').textContent=entry.label;dialog.showModal();
 }});
 
 import {installProjectCarousel} from './project-carousel.js';
-installProjectCarousel();
+installProjectCarousel(profileSounds);
