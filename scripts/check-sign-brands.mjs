@@ -18,6 +18,14 @@ for(const entry of destinations){
  const fx=sign.userData.illumination;
  if(entry.id==='contact')assert.equal(fx,undefined,'Contact has no neon border or spill light');
  if(entry.id==='cv')assert.ok(entry.size[0]>entry.size[1]*2,'Experience is horizontal');
+ if(entry.id==='cv'){
+  assert.ok(sign.userData.fillMaterial.isMeshStandardMaterial,'Experience is a luminous physical face');
+  assert.ok(sign.userData.fillMaterial.emissiveMap?.isDataTexture,'blue face has a diffusing backlight map');
+  updateSignIllumination([sign],0,5);const dayGlow=sign.userData.fillMaterial.emissiveIntensity;
+  updateSignIllumination([sign],1,5);assert.ok(sign.userData.fillMaterial.emissiveIntensity>dayGlow,'blue backlight brightens at night');
+  assert.equal(fx.auras.length,40,'forty individually glowing marquee bulbs');
+  assert.equal(fx.light.color.getHex(),0xff982a,'Experience spill is warm orange');
+ }
  if(entry.id==='projects'){
   assert.ok(sign.userData.fillMaterial.isMeshStandardMaterial,'Projects uses an emissive lightbox surface');
   assert.equal(fx.light.color.getHex(),0xffce70,'Projects spill is warm yellow');

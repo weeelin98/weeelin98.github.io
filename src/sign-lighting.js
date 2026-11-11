@@ -45,12 +45,19 @@ export function addSignIllumination(sign){
  let color=0xfff1d4;
  if(entry.id==='about')glowTube(outline(w*.475,h*.455),color,.017);
  if(entry.id==='cv'){
-  color=0xffc66c;const points=outline(w*.43,h*.445),curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)),true),socketMat=new THREE.MeshStandardMaterial({color:0x72573a,roughness:.7});
-  for(let i=0;i<28;i++){
-   const p=curve.getPoint(i/28),socket=new THREE.Mesh(socketGeometry,socketMat);socket.rotation.x=Math.PI/2;socket.position.copy(p);group.add(socket);
-   const bulb=new THREE.Mesh(bulbGeometry,lamp(color));bulb.position.copy(p);bulb.position.z+=.045;group.add(bulb);
-   const glow=new THREE.Mesh(bulbGeometry,new THREE.MeshBasicMaterial({color,transparent:true,opacity:.13,depthWrite:false,blending:THREE.AdditiveBlending,toneMapped:false}));glow.position.copy(bulb.position);glow.scale.setScalar(2.1);halos.push(glow.material);group.add(glow);
+  color=0xff982a;
+  const points=outline(w*.46,h*.43),curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)),true),socketMat=new THREE.MeshStandardMaterial({color:0x8c6336,roughness:.55,metalness:.45});
+  // Dense marquee bulbs, each with its own luminous globe and soft optical halo.
+  const bulbMat=lamp(color);bulbMat.toneMapped=false;
+  for(let i=0;i<40;i++){
+   const p=curve.getPointAt(i/40),socket=new THREE.Mesh(socketGeometry,socketMat);socket.rotation.x=Math.PI/2;socket.position.copy(p);socket.scale.setScalar(1.12);group.add(socket);
+   const bulb=new THREE.Mesh(bulbGeometry,bulbMat);bulb.scale.setScalar(1.22);bulb.position.copy(p);bulb.position.z+=.055;group.add(bulb);
+   const hot=new THREE.Mesh(bulbGeometry,new THREE.MeshBasicMaterial({color:0xffe3a0,toneMapped:false}));hot.scale.setScalar(.55);hot.position.copy(bulb.position);hot.position.z+=.052;group.add(hot);
+   const aura=new THREE.SpriteMaterial({map:glowTexture,color:0xff8b20,transparent:true,opacity:.15,depthWrite:false,blending:THREE.AdditiveBlending,toneMapped:false});auras.push(aura);
+   const glow=new THREE.Sprite(aura);glow.position.copy(bulb.position);glow.position.z+=.04;glow.scale.setScalar(.45);glow.userData.nonOccluding=true;group.add(glow);
   }
+  glowTube(outline(w*.427,h*.345),0xffd38a,.012);
+
  }
  if(entry.id==='projects'){
   glowTube(outline(w*.475,h*.45),0xff7029,.034);
@@ -102,6 +109,7 @@ export function updateSignIllumination(signs,night,time,reduced=false){
   fx.halos.forEach(m=>m.opacity=.035+strength*.12);
   fx.auras.forEach(m=>m.opacity=(.025+.26*night)*(1+hover*.2)*variation);
   fx.light.intensity=strength*(fx.kind==='cv'?2.1:['notes','projects'].includes(fx.kind)?7:1.35);
+  if(fx.kind==='cv')sign.userData.fillMaterial.emissiveIntensity=.18+1.5*night+hover*.15;
   if(fx.kind==='projects')sign.userData.fillMaterial.emissiveIntensity=.25+.65*night+hover*.1;
  }
 }

@@ -60,7 +60,16 @@ export function makeNavigationSign(entry,blank=false){
  const geometry=new THREE.ExtrudeGeometry(outline,{depth:t,steps:1,bevelEnabled:true,bevelSegments:3,bevelSize:.035,bevelThickness:.025,curveSegments:24});geometry.translate(0,0,-t/2);
  const rim=new THREE.MeshStandardMaterial({color:d.rim,roughness:.58});
  const body=new THREE.Mesh(geometry,rim);body.castShadow=true;body.receiveShadow=true;plate.add(body);
- const fill=entry.id==='projects'?new THREE.MeshStandardMaterial({color:d.fill,emissive:0xffce70,emissiveIntensity:.3,roughness:.5}):new THREE.MeshBasicMaterial({color:d.fill,toneMapped:false});
+ const fill=entry.id==='projects'?new THREE.MeshStandardMaterial({color:d.fill,emissive:0xffce70,emissiveIntensity:.3,roughness:.5}):entry.id==='cv'?new THREE.MeshStandardMaterial({color:d.fill,emissive:0x2589df,emissiveIntensity:.18,roughness:.42}):new THREE.MeshBasicMaterial({color:d.fill,toneMapped:false});
+ if(entry.id==='cv'){
+  // A diffusing blue face: a broad internal light with gently darker edges.
+  const pixels=new Uint8Array(64*32*4);
+  for(let y=0;y<32;y++)for(let x=0;x<64;x++){
+   const edge=Math.pow(Math.sin(Math.PI*(x+.5)/64)*Math.sin(Math.PI*(y+.5)/32),.45),value=Math.round(255*(.28+.72*edge)),i=(y*64+x)*4;
+   pixels[i]=pixels[i+1]=pixels[i+2]=value;pixels[i+3]=255;
+  }
+  const diffuser=new THREE.DataTexture(pixels,64,32);diffuser.needsUpdate=true;diffuser.magFilter=THREE.LinearFilter;diffuser.minFilter=THREE.LinearFilter;fill.emissiveMap=diffuser;
+ }
  const inkMaterial=new THREE.MeshBasicMaterial({map:textTexture(entry,blank),transparent:true,depthWrite:false,toneMapped:false});
  const inks=[];const frontDepth=t/2+.055;
  for(const side of d.doubleSided?[1,-1]:[1]){
