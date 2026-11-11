@@ -11,9 +11,9 @@ import {createPicker} from '../src/interactions.js';
 
 globalThis.document={createElement:()=>({width:0,height:0,getContext:()=>new Proxy({},{get:(o,k)=>o[k]??(()=>{}),set:(o,k,v)=>(o[k]=v,true)})})};
 const clockDate=(h,m=0)=>new Date(2026,10,10,h,m);
-assert.equal(localDay(clockDate(6,59)),'night');assert.equal(localDay(clockDate(7)),'day');assert.equal(localDay(clockDate(18,59)),'day');assert.equal(localDay(clockDate(19)),'night');
+assert.equal(localDay(clockDate(5,59)),'night');assert.equal(localDay(clockDate(6)),'day');assert.equal(localDay(clockDate(17,59)),'day');assert.equal(localDay(clockDate(18)),'night');
 let now=clockDate(8),stub={day:'day',weather:'clear',setDay(v){this.day=v;},setWeather(v){this.weather=v;}},cycle=createEnvironmentCycle(stub,{now:()=>now});
-cycle.update(299,299);assert.equal(stub.weather,'clear');cycle.update(1,1);assert.equal(stub.weather,'rain');
+assert.equal(stub.weather,'snow','winter welcome starts with snow');cycle.update(299,299);assert.equal(stub.weather,'snow');cycle.update(1,1);assert.equal(stub.weather,'clear');
 cycle.selectWeather('snow');cycle.update(900,900);assert.equal(stub.weather,'snow');assert.equal(cycle.dayMode,'auto');
 now=clockDate(22);cycle.update(0,25);assert.equal(stub.day,'night','local clock keeps updating while life is paused');
 cycle.selectDay('day');cycle.selectWeather('auto');assert.equal(stub.weather,'snow');assert.equal(cycle.elapsed,0);cycle.update(300);assert.equal(stub.weather,'clear');assert.equal(stub.day,'day');
@@ -35,6 +35,11 @@ let time=0,maxStep=0;
 function tick(seconds,paused=false){for(let i=0;i<Math.round(seconds*30);i++){const dt=1/30,active=paused?0:dt,before=people.citizens.map(p=>p.root.position.clone());time+=active;environment.update(dt,active);if(active){people.update(time,dt,environment.weather==='rain',environment.weather==='snow');environment.updateLife(time,dt);traffic.update(dt);ferris.update(time);carousel.update(time);}people.citizens.forEach((p,j)=>maxStep=Math.max(maxStep,p.root.position.distanceTo(before[j])));}}
 const start=performance.now();
 const manualCycle=createEnvironmentCycle(environment,{now:()=>clockDate(8)});
+assert.equal(environment.weather,'snow');assert.equal(environment.snowCover,1,'first frame has a snowy city');
+for(const outfit of environment.winter.gear){
+ const coat=outfit.parts[0];coat.updateMatrixWorld(true);const size=new THREE.Box3().setFromObject(coat).getSize(new THREE.Vector3());
+ assert.ok(Math.max(size.x,size.z)<.4&&size.y<.5,'coats remain proportional to a roughly 1.2-unit-tall citizen');
+}
 manualCycle.selectDay('night');tick(.3);assert.ok(environment.night>.02,'manual daylight responds visibly within 300ms');tick(2);assert.equal(environment.night,1);
 manualCycle.selectWeather('rain');tick(3);assert.equal(environment.rainAmount,1);assert.equal(environment.day,'night','manual Rain preserves Night');
 const pausedSnow=environment.snowfall.flakes.geometry.attributes.position.array.slice();manualCycle.selectWeather('snow');tick(3,true);assert.equal(environment.snowAmount,1);assert.deepEqual(environment.snowfall.flakes.geometry.attributes.position.array,pausedSnow,'manual weather fades while snow motion is paused');

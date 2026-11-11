@@ -29,6 +29,12 @@ export const destinations=contentEntries.map(entry=>({
  camera:locations.find(place=>place.id===entry.buildingId).camera,
 }));
 
+// Dock-only Experience entrance; physical signs keep their existing six identities.
+export const navigationEntries=[destinations[0],{
+ id:'experience',label:'Experience',regionId:'central',status:'placeholder',href:'',
+ description:'教育、工作与成长经历。完整内容将在后续加入。',color:'#ad6846',
+},...destinations.slice(1)];
+
 
 
 

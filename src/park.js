@@ -31,9 +31,23 @@ export function createPark(root){
    #include <alphatest_fragment>`);
  };}
  // A quiet neutral floor surrounds the finite planted park, with the sky above.
- const backdropMaterial=new THREE.MeshBasicMaterial({color:0xe9e7d9,transparent:true,depthWrite:false,fog:false});
- backdropMaterial.onBeforeCompile=shader=>{shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying float backdropY;').replace('#include <project_vertex>','#include <project_vertex>\nbackdropY=gl_Position.y/gl_Position.w;');shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying float backdropY;').replace('#include <alphatest_fragment>','diffuseColor.a*=1.-smoothstep(.50,.77,backdropY);\n#include <alphatest_fragment>');};
- const backdrop=new THREE.Mesh(new THREE.PlaneGeometry(2000,2000),backdropMaterial);backdrop.rotation.x=-Math.PI/2;backdrop.position.y=-1.15;backdrop.renderOrder=-8;root.add(backdrop);
+ const backdropColor=new THREE.Color(0xe9e7d9);
+ // Blend in the opaque queue, before buildings. A transparent full-screen
+ // material would otherwise paint over the city's opaque geometry.
+ const backdropMaterial=new THREE.ShaderMaterial({depthTest:false,depthWrite:false,fog:false,
+  blending:THREE.CustomBlending,blendSrc:THREE.SrcAlphaFactor,blendDst:THREE.OneMinusSrcAlphaFactor,
+  blendSrcAlpha:THREE.OneFactor,blendDstAlpha:THREE.OneMinusSrcAlphaFactor,
+  uniforms:{baseColor:{value:backdropColor}},
+  vertexShader:'varying float backdropY;void main(){gl_Position=vec4(position.xy,1.,1.);backdropY=position.y;}',
+  fragmentShader:`uniform vec3 baseColor;varying float backdropY;void main(){gl_FragColor=vec4(baseColor,1.-smoothstep(.50,.77,backdropY));
+   #include <tonemapping_fragment>
+   #include <colorspace_fragment>
+  }`,
+ });
+ backdropMaterial.color=backdropColor;
+ // This is a screen backdrop, not terrain: a world-space ground plane crosses
+ // the near clip in tall windows, exposing a horizontal stripe of sky below it.
+ const backdrop=new THREE.Mesh(new THREE.PlaneGeometry(2,2),backdropMaterial);backdrop.frustumCulled=false;backdrop.renderOrder=-8;root.add(backdrop);
  terrainShader(groundMaterial);
  const grass=new THREE.Mesh(terrain,groundMaterial);grass.receiveShadow=true;grass.renderOrder=-5;grass.name='continuous-meadow';root.add(grass);
  const winterMat=new THREE.MeshStandardMaterial({color:0xf2f5f4,roughness:.98,transparent:true,depthWrite:false});terrainShader(winterMat,true);

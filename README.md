@@ -13,20 +13,38 @@ Open http://127.0.0.1:5173/. Left-drag turns the complete city display; right-dr
 pans and the wheel zooms. Click a building or ride to focus, a sign to open its
 placeholder content, and empty background to return to the overview. Escape closes
 an open panel first, otherwise returns home. Dragging interrupts a camera flight.
-Closing a panel preserves the camera. No navigation bar, minimap or game tasks.
+Closing a panel preserves the camera. A compact glass navigation dock stays visible
+at the bottom; no minimap or game tasks are required.
 
 ## Current environment controls
 
 Two small groups provide Light: Auto / Day / Night, and Weather: Auto / Clear /
-Rain / Snow. Both Auto modes start enabled, with Clear weather. Computer local time
-selects Day from 07:00 inclusive to 19:00 exclusive, otherwise Night. Initial night
+Rain / Snow. Both Auto modes start enabled, with Snow as the winter welcome weather.
+Computer local time selects Day from 06:00 inclusive to 18:00 exclusive, otherwise Night. Initial night
 loads directly without a daytime flash. No location or weather API is used.
 
 Automatic weather advances Clear → Rain → Snow → Clear every five active foreground
 minutes. Manual selection overrides only its own dimension. Returning weather to
 Auto preserves the current weather and restarts its timer. Returning Light to Auto
 checks local time immediately; background-to-foreground recovery also checks it.
-Thresholds and intervals are centralized in `src/environment-cycle.js`.
+Thresholds, intervals and the configurable initial weather are centralized in
+`src/environment-cycle.js`. The Snow welcome is an explicit presentation setting,
+not an inference about the visitor's hemisphere or actual weather.
+
+The persistent glass dock contains About Me, Experience, CV, Projects, Memo, Contact Me and
+Notes. Pointer proximity drives spring magnification and lift; hover or keyboard focus reveals its name. Buttons
+reuse the physical signs' content opener; Experience is an additional dock-only
+placeholder. Navigation configuration lives in `src/content.js`. Arrow keys move between its icons; Escape keeps its existing camera/panel behavior.
+Full content pages remain pending user acceptance of this local revision.
+
+The glass dock keeps its original 80px desktop / 64px compact frame. User-supplied
+PNG icons fill the unframed buttons. Spring magnification and a short entry hop
+may extend above the frame; reduced-motion mode suppresses both effects.
+`src/dock-audio.js` plays local samples in `public/sounds/`: the opening water drop
+from `freesound_community-water-drop-89799.mp3` (0.18–0.66s, gain adjusted) for
+hover, and the pop from `universfield-bubble-pop-02-293341.mp3` (0.08–0.46s) for
+clicks. Clips have short fades; hover is throttled and voices are bounded. Browser
+autoplay policy requires a first click or keypress before hover audio can play.
 
 Automatic day/night and weather transitions take ten seconds. Manual Light changes
 take 1.8 seconds and manual Weather changes 2.4 seconds, so a click produces prompt
@@ -108,7 +126,8 @@ lamps, cool night fill and restrained window emission also work in night rain/sn
 `npm run check` and `npm run build` pass. Regression checks cover ten simulated
 minutes of life, bus spacing/stops, pedestrian separation, upright gondolas,
 carousel direction, picking/occlusion, focus/interruption, hover, pause and resource
-reuse. Winter checks cover the local 07:00/19:00 boundaries, five-minute cycling,
+reuse. Winter checks cover the local 06:00/18:00 boundaries, snowy initialization,
+proportional coat geometry, five-minute cycling,
 independent overrides, background/pause time, roof exposure, six light/weather
 combinations, 18 rapid switches, winter recovery and unchanged building/sign
 positions. Maximum actor displacement was below 0.04 world units per 1/30s step.
@@ -128,6 +147,6 @@ Night/Rain → Day/Snow switching with simulation time frozen, and rotated About
 selection, panel dismissal and overview return.
 
 `base: './'` keeps generated asset paths suitable for a future GitHub Pages project
-path. Serve through Vite; file:// loading is unsupported. F5 restores Clear weather,
+path. Serve through Vite; file:// loading is unsupported. F5 restores Snow weather,
 a running overview, local-time light and both Auto modes. Pushes to `main` run
 the GitHub Pages deployment workflow. Screenshots in `outputs/` remain local.

@@ -41,6 +41,13 @@ for(const state of ['rain','sunny','night','rain','night','sunny']){
 // The turntable preserves camera orientation; background and celestial framing
 // must remain complete when panning and zooming through the supported range.
 const moonScreen=environment.surroundings.moon.position.clone().project(camera),orientation=camera.quaternion.clone();
+const sky=environment.surroundings.sky;
+assert.equal(sky.frustumCulled,false,'full-screen sky is never world-frustum culled');
+assert.equal(sky.material.depthTest,false,'sky covers clear color without writing depth');
+assert.equal(sky.material.depthWrite,false);
+const skyVertices=sky.geometry.attributes.position;
+const screenTriangle=new THREE.Triangle(...[0,1,2].map(i=>new THREE.Vector3(skyVertices.getX(i),skyVertices.getY(i),0)));
+for(const x of [-1,1])for(const y of [-1,1])assert.ok(screenTriangle.containsPoint(new THREE.Vector3(x,y,0)),'sky triangle covers every viewport corner');
 for(let i=0;i<24;i++){camera.position.set(31+i*.2,29,43-i*.1);camera.quaternion.copy(orientation);camera.zoom=.8+(i%5)*.4;camera.updateProjectionMatrix();camera.updateMatrixWorld(true);environment.updateView(camera,0,time);const p=environment.surroundings.moon.position.clone().project(camera);assert.ok(Math.hypot(p.x-moonScreen.x,p.y-moonScreen.y)<1e-8);}
 assert.equal(people.count,50);
 // Cloud drift and wing motion use scene time, while colors may still settle.

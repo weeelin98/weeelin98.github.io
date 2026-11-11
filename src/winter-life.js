@@ -6,7 +6,9 @@ export function createWinterLife(citizens,floorAt,parent){
  const gear=[];
  for(const p of exposed){
   const color=[C.blueDark,C.terraDark,C.green,0x926781][p.id%4],accessory=[C.yellow,C.cream,C.terra,C.mint][p.id%4],parts=[];
-  const coat=new THREE.Group();p.body.add(coat);const body=cyl(coat,0,.18,0,.168,.48,color);body.scale.z=.83;
+  // Cylinder helpers already encode the radius in their scale. Preserve it
+  // when flattening the coat; assigning .83 made the coat five times too deep.
+  const coat=new THREE.Group();p.body.add(coat);const body=cyl(coat,0,.18,0,.168,.48,color);body.scale.z*=.83;
   for(let y of [.05,.19,.32])ball(coat,0,y,.145,.015,C.cream);parts.push(coat);
   p.arms.forEach(a=>{const sleeve=new THREE.Group();a.upper.add(sleeve);cyl(sleeve,0,-.10,0,.056,.22,color);parts.push(sleeve);const glove=new THREE.Group();a.fore.add(glove);ball(glove,0,-.16,0,.047,accessory);parts.push(glove);});
   const scarf=new THREE.Group();p.body.add(scarf);const ring=new THREE.Mesh(new THREE.TorusGeometry(.09,.035,5,12),mat(accessory));ring.position.y=.43;ring.rotation.x=Math.PI/2;scarf.add(ring);box(scarf,.07,.28,.16,.07,.28,.04,accessory);parts.push(scarf);

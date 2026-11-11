@@ -111,7 +111,7 @@ export function installInteractions({scene,camera,controls,canvas,signs,display=
  canvas.addEventListener('pointercancel',()=>{down=null;hideHover();});
  canvas.addEventListener('pointerleave',()=>{dirty=false;mouse=null;hideHover();});
  addEventListener('blur',()=>{down=null;hideHover();stop();});
- return {flight,panel,feedback,update(now,wallDelta=1/60,simulationTime=0){
+ return {flight,panel,feedback,open,update(now,wallDelta=1/60,simulationTime=0){
    flight.update(now);
    if(dirty&&mouse&&!down&&!panel.open){dirty=false;const result=hit(mouse);hover=result.type==='content'?result.sign:null;
      canvas.style.cursor=hover?'pointer':result.type==='focus'?'zoom-in':'grab';tooltip.hidden=!hover;

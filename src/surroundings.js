@@ -5,17 +5,23 @@ import {createPark} from './park.js';
 // Added after framing: never participates in the city bounds or navigation picks.
 export function createSurroundings(scene,displayRoot=scene){
  const root=new THREE.Group();root.name='quiet-surroundings';root.userData.nonInteractive=true;scene.add(root);
- const sky=new THREE.Mesh(new THREE.SphereGeometry(480,32,16),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,
-  uniforms:{rain:{value:0},night:{value:0}},
-  vertexShader:`varying vec3 direction;void main(){direction=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
-  fragmentShader:`uniform float rain;uniform float night;varying vec3 direction;
-   void main(){float h=smoothstep(-.55,-.1,normalize(direction).y);
+ // A clip-space background cannot expose the scene's differently colored clear
+ // color at a sphere edge, near/far clip, or extreme orthographic viewport.
+ const skyGeometry=new THREE.BufferGeometry();
+ skyGeometry.setAttribute('position',new THREE.Float32BufferAttribute([-1,-1,0,3,-1,0,-1,3,0],3));
+ const sky=new THREE.Mesh(skyGeometry,new THREE.ShaderMaterial({depthTest:false,depthWrite:false,fog:false,
+  uniforms:{rain:{value:0},night:{value:0},cameraBasis:{value:new THREE.Matrix3()},viewHalfSize:{value:new THREE.Vector2(25,25)}},
+  vertexShader:`varying vec2 skyScreen;void main(){skyScreen=position.xy;gl_Position=vec4(position.xy,1.,1.);}`,
+  fragmentShader:`uniform float rain;uniform float night;uniform mat3 cameraBasis;uniform vec2 viewHalfSize;varying vec2 skyScreen;
+   void main(){vec2 offset=skyScreen*viewHalfSize;
+   vec3 direction=cameraBasis*vec3(offset,-sqrt(max(1.,480.*480.-dot(offset,offset))));
+   float h=smoothstep(-.55,-.1,normalize(direction).y);
    vec3 day=mix(vec3(.23,.53,.89),vec3(.08,.32,.73),h);
    vec3 overcast=mix(vec3(.19,.29,.40),vec3(.09,.17,.28),h);
    vec3 dark=mix(vec3(.010,.018,.038),vec3(.003,.008,.024),h);
    gl_FragColor=vec4(mix(mix(day,overcast,rain),dark,night),1.);
    #include <colorspace_fragment>
-  }`}));root.add(sky);sky.renderOrder=-10;
+  }`}));root.add(sky);sky.renderOrder=-10;sky.frustumCulled=false;
  const parkRoot=new THREE.Group();parkRoot.name='park-display';parkRoot.userData.nonInteractive=true;displayRoot.add(parkRoot);
  const park=createPark(parkRoot),grass=park.grass,dummy=new THREE.Object3D();
  const cloudGroup=new THREE.Group();root.add(cloudGroup);
@@ -30,7 +36,7 @@ export function createSurroundings(scene,displayRoot=scene){
  for(let i=0;i<3;i++){const bird=new THREE.Group(),wings=[];for(let side of [-1,1]){const wing=new THREE.Mesh(wingGeometry,birdMat);wing.position.x=side*.11;bird.add(wing);wings.push(wing);}flock.add(bird);birds.push({bird,wings});}
  const fogDay=new THREE.Color(0x99bcd7),fogRain=new THREE.Color(0x708ca3),fogNight=new THREE.Color(0x1b293d);
  scene.fog=new THREE.Fog(fogDay,160,330);
- const fwd=new THREE.Vector3(),right=new THREE.Vector3(),up=new THREE.Vector3();
+ const fwd=new THREE.Vector3(),right=new THREE.Vector3(),up=new THREE.Vector3(),skyRotation=new THREE.Matrix4();
  let birdVisibility=0;
  return {root,grass,park,cloudGroup,clouds,storms,moon,lunar,flock,sky,
   update(camera,wallDt,time,rain,night,snow=0,fallingSnow=snow){
@@ -42,6 +48,8 @@ export function createSurroundings(scene,displayRoot=scene){
    stormMat.opacity=cloudiness*.6*(1-night*.6);
    fwd.set(0,0,-1).applyQuaternion(camera.quaternion);right.set(1,0,0).applyQuaternion(camera.quaternion);up.set(0,1,0).applyQuaternion(camera.quaternion);
    const halfW=camera.right/camera.zoom,halfH=camera.top/camera.zoom;
+   sky.material.uniforms.viewHalfSize.value.set(halfW,halfH);
+   sky.material.uniforms.cameraBasis.value.setFromMatrix4(skyRotation.makeRotationFromQuaternion(camera.quaternion));
    cloudGroup.position.copy(camera.position).addScaledVector(fwd,175).addScaledVector(right,Math.sin(time*.035)*halfW*.035);cloudGroup.quaternion.copy(camera.quaternion);cloudGroup.scale.set(halfW,halfH,1);
    lunar.update(night);
    lunar.updateView(camera);

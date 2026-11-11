@@ -1,9 +1,10 @@
-export const ENVIRONMENT_TIMING=Object.freeze({dayStartHour:7,nightStartHour:19,weatherIntervalSeconds:300,transitionSeconds:10,manualLightSeconds:1.8,manualWeatherSeconds:2.4});
+export const ENVIRONMENT_TIMING=Object.freeze({dayStartHour:6,nightStartHour:18,initialWeather:'snow',weatherIntervalSeconds:300,transitionSeconds:10,manualLightSeconds:1.8,manualWeatherSeconds:2.4});
 export function localDay(date,config=ENVIRONMENT_TIMING){const hour=date.getHours()+date.getMinutes()/60;return hour>=config.dayStartHour&&hour<config.nightStartHour?'day':'night';}
 export function createEnvironmentCycle(environment,{now=()=>new Date(),config=ENVIRONMENT_TIMING}={}){
  let dayMode='auto',weatherMode='auto',elapsed=0,visible=true,dayCheck=0;
  const sequence=['clear','rain','snow'];
- if(environment.initialize)environment.initialize(localDay(now(),config));else{environment.setDay(localDay(now(),config));environment.setWeather('clear');}
+ const initialDay=localDay(now(),config),initialWeather=config.initialWeather??'snow';
+ if(environment.initialize)environment.initialize(initialDay,initialWeather);else{environment.setDay(initialDay);environment.setWeather(initialWeather);}
  function refreshDay(){if(dayMode==='auto')environment.setDay(localDay(now(),config));}
  return {get dayMode(){return dayMode;},get weatherMode(){return weatherMode;},get elapsed(){return elapsed;},
   selectDay(mode){if(!['auto','day','night'].includes(mode))return;dayMode=mode;if(mode==='auto')refreshDay();else environment.setDay(mode,{duration:config.manualLightSeconds});},
