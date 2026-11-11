@@ -64,3 +64,6 @@ html:has(.about-page){height:auto;overflow:auto;background:#111}
 /* Keep each photograph with its passage and prevent float collisions. */
 .blog-passage{display:flow-root;margin-bottom:32px}.passage-photo{width:32%;max-width:320px;margin-top:6px;margin-bottom:20px}.passage-right{float:right;margin-left:36px;margin-right:0}.passage-left{float:left;margin-right:36px;margin-left:0}.passage-photo img{display:block;width:100%;height:auto;border-radius:6px}.blog-passage:nth-child(2) .passage-photo{width:36%;max-width:360px}.blog-passage:nth-child(3) .passage-photo{width:27%;max-width:270px}
 @media(max-width:700px){.blog-passage{margin-bottom:24px}.blog-passage .passage-photo{float:none;width:70%;max-width:340px;margin:8px auto 28px}}
+/* Keep the owner's preferred orange punctuation on the wordmark and section titles. */
+.wordmark span,.section-heading h2>span{color:var(--accent)}
+.intro h1>span{color:var(--accent)}
