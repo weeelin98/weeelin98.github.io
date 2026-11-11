@@ -43,7 +43,7 @@ for(const [category,entries]of stacks){
   label.textContent=name;li.append(mark,label);list.append(li);
  }
  if(category.startsWith('Cloud')){const note=document.createElement('p');note.className='stack-note';note.textContent='AWS: Lambda, S3, EC2, Athena, Redshift, ECS · EKS & SQS in internship work';group.append(note);}
- grid.append(group);
+ grid?.append(group);
 }
 const themeButton=document.querySelector('#theme-toggle');
 function setTheme(light){document.body.classList.toggle('light-profile',light);document.body.classList.toggle('night',!light);themeButton.textContent=light?'☾':'☼';themeButton.setAttribute('aria-label',`Switch to ${light?'dark':'light'} theme`);}
@@ -54,3 +54,6 @@ installNavigationDock({open(entry){
  if(entry.href&&entry.status!=='coming-soon'){location.assign(new URL(entry.href,location.href).href);return;}
  dialog.querySelector('h2').textContent=entry.label;dialog.showModal();
 }});
+
+import {installProjectCarousel} from './project-carousel.js';
+installProjectCarousel();

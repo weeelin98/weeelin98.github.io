@@ -1,10 +1,10 @@
 import {navigationEntries} from './content.js';
 import {createDockAudio} from './dock-audio.js';
 
-export function installNavigationDock({open}){
+export function installNavigationDock({open,sounds:sharedSounds}){
  const dock=document.querySelector('#navigation-dock'),list=dock.querySelector('#dock-destinations');
  const reduced=matchMedia('(prefers-reduced-motion: reduce)'),compact=matchMedia('(max-width:600px)');
- const sounds=createDockAudio(dock),items=[];let pointerX=null,focused=null,hovered=null,frame=0,lastTime=0;
+ const sounds=sharedSounds??createDockAudio(dock),items=[];let pointerX=null,focused=null,hovered=null,frame=0,lastTime=0;
  const baseSize=()=>compact.matches?36:52;
  function animate(now){
   frame=0;const dt=Math.min((now-lastTime)/1000||1/60,1/30);lastTime=now;let moving=false;
@@ -38,7 +38,7 @@ export function installNavigationDock({open}){
   const slot=document.createElement('div');slot.className='dock-slot';slot.style.width=`${baseSize()}px`;
   button.append(icon,label);slot.append(button);list.append(slot);
   const item={slot,button,value:0,velocity:0,hop:0,hopVelocity:0};items.push(item);
-  button.addEventListener('click',()=>{sounds.click();open(entry);});
+  button.addEventListener('click',()=>{void sounds.activate(()=>open(entry));});
   button.addEventListener('pointerenter',e=>{
    if(e.pointerType==='touch'||hovered===button)return;hovered=button;
    if(!reduced.matches)item.hopVelocity=170;

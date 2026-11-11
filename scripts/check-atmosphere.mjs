@@ -16,8 +16,8 @@ const bounds=new THREE.Box3().setFromObject(scene);bounds.max.y=Math.max(bounds.
 let hw=0,hh=0;for(const x of [bounds.min.x,bounds.max.x])for(const y of[bounds.min.y,bounds.max.y])for(const z of[bounds.min.z,bounds.max.z]){const p=new THREE.Vector3(x,y,z).applyMatrix4(camera.matrixWorldInverse);hw=Math.max(hw,Math.abs(p.x));hh=Math.max(hh,Math.abs(p.y));}
 const aspect=1101/1244,h=Math.max(hh,hw/aspect)*1.12;camera.left=-h*aspect;camera.right=h*aspect;camera.top=h;camera.bottom=-h;camera.updateProjectionMatrix();
 const picker=createPicker(scene,city.signs),feedback=createSignFeedback(city.signs);
-assert.deepEqual(destinations.map(e=>e.label),['About Me','Experience','Projects','Coffee','Contact Me','Notes']);
-assert.equal(destinations.find(e=>e.label==='Notes').status,'coming-soon');
+assert.deepEqual(destinations.map(e=>e.label),['About Me','Experience','Projects','Coffee','Contact Me','My Story']);
+assert.equal(destinations.find(e=>e.label==='My Story').status,'ready');
 for(const sign of city.signs.filter(s=>s.userData.entry.interaction!=='decoration')){const p=sign.position.clone().project(camera);const result=picker.pick(new THREE.Vector2(p.x,p.y),camera);assert.equal(result.entry?.id,sign.userData.entry.id,`${sign.userData.entry.label} must be visible and pickable from overview`);assert.ok(Math.abs(p.x)<1&&Math.abs(p.y)<1);}
 const target=city.signs[0],base=target.position.clone();
 for(let i=0;i<180;i++)feedback.update(target,1/60,i/60);
@@ -62,4 +62,4 @@ environment.surroundings.flock.children.forEach((b,i)=>assert.ok(b.position.equa
 assert.deepEqual(environment.surroundings.flock.children.flatMap(b=>b.children.map(w=>w.rotation.z)),wingAngles);
 const luminance=c=>c.r*.2126+c.g*.7152+c.b*.0722;
 for(const entry of destinations){const d=entry.design,text=new THREE.Color(d.text),base=new THREE.Color(d.fill),hover=new THREE.Color(d.hoverFill);for(let i=0;i<=10;i++){const fill=base.clone().lerp(hover,i/10),a=luminance(fill),b=luminance(text);assert.ok((Math.max(a,b)+.05)/(Math.min(a,b)+.05)>4.5,`${entry.label}: text contrast during hover`);}}
-console.log('Atmosphere checks passed: six overview entrances, reversible hover, Notes status, 6 environment cycles and 24 background pan/zoom views.');
+console.log('Atmosphere checks passed: six overview entrances, reversible hover, personal story route, 6 environment cycles and 24 background pan/zoom views.');

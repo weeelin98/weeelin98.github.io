@@ -86,7 +86,7 @@ export class CameraFlight{
  }
 }
 
-export function installInteractions({scene,camera,controls,canvas,signs,display=null}){
+export function installInteractions({scene,camera,controls,canvas,signs,display=null,sounds=null}){
  const picker=createPicker(scene,signs,display?.root),flight=new CameraFlight(camera,controls,display),ndc=new THREE.Vector2(),feedback=createSignFeedback(signs);
  if(display)display.onStart=()=>flight.cancel();
  const panel=document.querySelector('#content-panel'),title=document.querySelector('#panel-title'),tag=document.querySelector('#panel-region'),description=document.querySelector('#panel-description'),tooltip=document.querySelector('#hover-label');
@@ -99,7 +99,7 @@ export function installInteractions({scene,camera,controls,canvas,signs,display=
  function open(entry){
    if(entry.href&&entry.status!=='coming-soon'){const url=new URL(entry.href,location.href);if(['http:','https:','mailto:'].includes(url.protocol)){if(url.origin===location.origin)location.assign(url.href);else window.open(url.href,'_blank','noopener,noreferrer');}return;}
    stop();lastFocus=document.activeElement;title.textContent=entry.label;tag.textContent=`${entry.regionId.toUpperCase()} / ${entry.id.toUpperCase()}`;description.textContent=entry.description;
-   panel.querySelector('.placeholder p').textContent=entry.status==='coming-soon'?'Coming Soon · 敬请期待':'这个入口已就绪。完整内容页面将在后续加入。';
+   panel.querySelector('.placeholder p').textContent=entry.status==='coming-soon'?'Coming soon':'This page is not available yet.';
    controls.enabled=false;hideHover();panel.showModal();close.focus();
  }
  function dismiss(){panel.close();controls.enabled=true;lastFocus?.focus?.({preventScroll:true});canvas.focus({preventScroll:true});}
@@ -108,13 +108,15 @@ export function installInteractions({scene,camera,controls,canvas,signs,display=
  document.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();if(panel.open)dismiss();else flight.go();}});
  canvas.addEventListener('pointerdown',e=>{stop();hideHover();if(down){down.moved=true;return;}down={id:e.pointerId,x:e.clientX,y:e.clientY,button:e.button,moved:false};});
  canvas.addEventListener('pointermove',e=>{mouse=e;dirty=true;if(down&&Math.hypot(e.clientX-down.x,e.clientY-down.y)>5)down.moved=true;});
- canvas.addEventListener('pointerup',e=>{const press=down;down=null;dirty=true;if(!press||press.id!==e.pointerId||press.button!==0||press.moved||panel.open)return;const result=hit(e);if(result.type==='content')open(result.entry);else if(result.type==='focus')flight.go(result.place.camera);else if(result.type==='background')flight.go();});
+ canvas.addEventListener('pointerup',e=>{const press=down;down=null;dirty=true;if(!press||press.id!==e.pointerId||press.button!==0||press.moved||panel.open)return;const result=hit(e);if(result.type==='content'){if(sounds)void sounds.activate(()=>open(result.entry));else open(result.entry);}else if(result.type==='focus')flight.go(result.place.camera);else if(result.type==='background')flight.go();});
  canvas.addEventListener('pointercancel',()=>{down=null;hideHover();});
  canvas.addEventListener('pointerleave',()=>{dirty=false;mouse=null;hideHover();});
  addEventListener('blur',()=>{down=null;hideHover();stop();});
  return {flight,panel,feedback,open,update(now,wallDelta=1/60,simulationTime=0){
    flight.update(now);
-   if(dirty&&mouse&&!down&&!panel.open){dirty=false;const result=hit(mouse);hover=result.type==='content'?result.sign:null;
+   if(dirty&&mouse&&!down&&!panel.open){dirty=false;const result=hit(mouse),nextHover=result.type==='content'?result.sign:null;
+     if(nextHover&&nextHover!==hover&&mouse.pointerType!=='touch')sounds?.hover();
+     hover=nextHover;
      canvas.style.cursor=hover?'pointer':result.type==='focus'?'zoom-in':'grab';tooltip.hidden=!hover;
      if(hover){tooltip.textContent=`${result.entry.label} ↗`;tooltip.style.left=`${Math.max(8,Math.min(mouse.clientX+16,innerWidth-180))}px`;tooltip.style.top=`${Math.max(8,mouse.clientY-40)}px`;}
    }

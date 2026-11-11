@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,32 +7,32 @@
     <title>Little City</title>
   </head>
   <body>
-    <canvas id="city" aria-label="3D 微缩街区。左键拖动旋转，右键拖动平移，滚轮缩放。" tabindex="0"></canvas>
+    <canvas id="city" aria-label="3D miniature city. Drag to rotate, right-drag to pan, and scroll to zoom." tabindex="0"></canvas>
     <div id="hover-label" role="status" hidden></div>
-    <nav class="environment" aria-label="场景环境">
-      <div class="environment-group" role="group" aria-label="昼夜">
+    <nav class="environment" aria-label="Scene settings">
+      <div class="environment-group" role="group" aria-label="Time of day">
         <div class="group-label">Light <span id="current-day">Day</span></div>
-        <div class="day-options"><button data-day="auto" aria-pressed="true" title="按电脑本地时间自动切换昼夜">Auto</button><button data-day="day" aria-pressed="false">Day</button><button data-day="night" aria-pressed="false">Night</button></div>
+        <div class="day-options"><button data-day="auto" aria-pressed="true" title="Follow your local time">Auto</button><button data-day="day" aria-pressed="false">Day</button><button data-day="night" aria-pressed="false">Night</button></div>
       </div>
       <div class="control-divider" aria-hidden="true"></div>
-      <div class="environment-group" role="group" aria-label="天气">
+      <div class="environment-group" role="group" aria-label="Weather">
         <div class="group-label">Weather <span id="current-weather">Snow</span></div>
-        <div class="weather-options"><button data-weather="auto" aria-pressed="true" title="场景天气每五分钟轮换；暂停时停止计时">Auto</button><button data-weather="clear" aria-pressed="false">Clear</button><button data-weather="rain" aria-pressed="false">Rain</button><button data-weather="snow" aria-pressed="false">Snow</button></div>
+        <div class="weather-options"><button data-weather="auto" aria-pressed="true" title="Cycle weather every five minutes; timer stops when paused">Auto</button><button data-weather="clear" aria-pressed="false">Clear</button><button data-weather="rain" aria-pressed="false">Rain</button><button data-weather="snow" aria-pressed="false">Snow</button></div>
       </div>
       <div class="control-divider" aria-hidden="true"></div>
-      <button id="pause-animation" aria-pressed="false" aria-label="暂停动画" title="暂停人物、车辆、雨雪和自动天气"><span class="pause-icon" aria-hidden="true">Ⅱ</span><span class="pause-text">Pause</span></button>
+      <button id="pause-animation" aria-pressed="false" aria-label="Pause animation" title="Pause people, vehicles, weather effects, and automatic weather"><span class="pause-icon" aria-hidden="true">Ⅱ</span><span class="pause-text">Pause</span></button>
     </nav>
-    <nav id="navigation-dock" aria-label="个人网站快捷导航">
+    <nav id="navigation-dock" aria-label="Website shortcuts">
       <div id="dock-destinations" class="dock-destinations"></div>
     </nav>
     <dialog id="content-panel" aria-labelledby="panel-title" aria-describedby="panel-description">
-      <button class="close" aria-label="关闭内容面板" title="关闭 · Esc">×</button>
+      <button class="close" aria-label="Close panel" title="Close (Esc)">×</button>
       <div class="panel-mark" aria-hidden="true">↗</div>
       <p id="panel-region"></p>
       <h1 id="panel-title"></h1>
       <p id="panel-description"></p>
-      <div class="placeholder"><span aria-hidden="true">▤</span><p>这个入口已就绪。<br>完整内容页面将在后续加入。</p></div>
-      <button class="continue">继续逛逛 <span aria-hidden="true">↗</span></button>
+      <div class="placeholder"><span aria-hidden="true">▤</span><p>This page is not available yet.</p></div>
+      <button class="continue">Keep exploring <span aria-hidden="true">↗</span></button>
     </dialog>
     <script type="module" src="/src/main.js"></script>
   </body>
